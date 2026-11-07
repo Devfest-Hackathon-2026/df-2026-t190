@@ -5,9 +5,9 @@
 CREATE TABLE IF NOT EXISTS user_preferences (
   preference_id VARCHAR(64) PRIMARY KEY,
   user_id VARCHAR(64) NOT NULL,
-  allow_direct_alcohol VARCHAR(16) NOT NULL DEFAULT 'strict',      -- strict / conditional / allow
-  allow_fermented_zero VARCHAR(16) NOT NULL DEFAULT 'conditional', -- strict / conditional / allow
-  allow_cooked_evaporated VARCHAR(16) NOT NULL DEFAULT 'conditional', -- strict / conditional / allow
+  direct_alcohol_policy VARCHAR(16) NOT NULL DEFAULT 'strict',      -- strict / conditional / allow
+  fermented_zero_policy VARCHAR(16) NOT NULL DEFAULT 'conditional', -- strict / conditional / allow
+  cooked_evaporated_policy VARCHAR(16) NOT NULL DEFAULT 'conditional', -- strict / conditional / allow
   pork_policy VARCHAR(16) NOT NULL DEFAULT 'strict',              -- strict / conditional / allow
   gelatin_policy VARCHAR(16) NOT NULL DEFAULT 'conditional',      -- strict / conditional / allow
   custom_guideline_notes TEXT,                                    -- 自由記述補足テキスト

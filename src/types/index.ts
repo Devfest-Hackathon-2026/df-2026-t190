@@ -83,9 +83,9 @@ export interface AnalyzeResponse {
 export interface UserPreferenceEntity {
   preference_id: string;
   user_id: string;
-  allow_direct_alcohol: ToleranceLevel;
-  allow_fermented_zero: ToleranceLevel;
-  allow_cooked_evaporated: ToleranceLevel;
+  direct_alcohol_policy: ToleranceLevel;
+  fermented_zero_policy: ToleranceLevel;
+  cooked_evaporated_policy: ToleranceLevel;
   pork_policy: ToleranceLevel;
   gelatin_policy: ToleranceLevel;
   custom_guideline_notes: string;

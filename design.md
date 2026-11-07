@@ -160,12 +160,12 @@ DevFest Hackathon 2026 - チーム提出用リポジトリ仕様書
 | :--- | :--- | :--- | :--- |
 | `preference_id` | STRING (PK) | NO | 設定ID (UUID) |
 | `user_id` | STRING (FK) | NO | ユーザーID |
-| `allow_direct_alcohol` | STRING | NO | 直接アルコール許容度 (`strict` / `conditional` / `allow`) |
-| `allow_fermented_zero` | STRING | NO | 発酵由来・残存0%許容度 (`strict` / `conditional` / `allow`) |
-| `allow_cooked_evaporated` | STRING | NO | 加熱揮発アルコール許容度 (`strict` / `conditional` / `allow`) |
-| `pork_policy` | STRING | NO | 豚肉・エキスの許容レベル (`strict` / `conditional` / `allow`) |
-| `gelatin_policy` | STRING | NO | ゼラチンの許容レベル (`strict` / `conditional` / `allow`) |
-| `custom_guideline_notes` | TEXT | YES | ユーザー自由記述補足テキスト |
+| `direct_alcohol_policy` | STRING | NO | アルコール含有食品の基準 (`strict` / `conditional` / `allow`) |
+| `fermented_zero_policy` | STRING | NO | 発酵由来・残存0%（醤油等）の基準 (`strict` / `conditional` / `allow`) |
+| `cooked_evaporated_policy` | STRING | NO | 加熱揮発（みりん等）の基準 (`strict` / `conditional` / `allow`) |
+| `pork_policy` | STRING | NO | 豚肉・エキスの基準 (`strict` / `conditional` / `allow`) |
+| `gelatin_policy` | STRING | NO | ゼラチンの基準 (`strict` / `conditional` / `allow`) |
+| `custom_guideline_notes` | TEXT | YES | ユーザー入力の補足記述テキスト（任意記述） |
 | `updated_at` | TIMESTAMP | NO | 最終更新日時 |
 
 ### ② `analysis_history` (解析・判定履歴テーブル)
