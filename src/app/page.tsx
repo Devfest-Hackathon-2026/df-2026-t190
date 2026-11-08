@@ -17,7 +17,7 @@ import {
   Globe,
   Home,
   Settings,
-  User,
+  Moon,
   Utensils,
   Image as ImageIcon,
   Maximize2,
@@ -700,7 +700,7 @@ export default function HalalScanApp() {
             <div className="bg-[#24C27A] pt-10 pb-7 px-6 rounded-b-[36px] text-white space-y-4 shadow-sm relative">
               <div className="flex justify-between items-center">
                 <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-white shadow-sm">
-                  <User className="w-5 h-5 text-white" />
+                  <Moon className="w-5 h-5 text-white" />
                 </div>
                 {/* 言語切り替えボタン */}
                 <button
@@ -835,32 +835,6 @@ export default function HalalScanApp() {
 
                 <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border-2 border-white/40 group-hover:scale-105 transition-all shrink-0">
                   <Camera className="w-7 h-7" />
-                </div>
-              </div>
-
-              {/* クイックお試しサンプル（審査・デモ用） */}
-              <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
-                <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
-                  <Sparkles className="w-3.5 h-3.5 text-[#24C27A]" />
-                  <span>{t.trySampleTitle}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSampleRun("nikujaga")}
-                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100 cursor-pointer"
-                  >
-                    <p className="text-xs font-black text-slate-800">{t.sampleNikujagaTitle}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{t.sampleNikujagaDesc}</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSampleRun("ramen")}
-                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100 cursor-pointer"
-                  >
-                    <p className="text-xs font-black text-slate-800">{t.sampleRamenTitle}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{t.sampleRamenDesc}</p>
-                  </button>
                 </div>
               </div>
             </div>
