@@ -119,13 +119,13 @@ const translations = {
     // 店員さんに見せる指差しカード
     staffCardTitle: "店員さんに見せる指差しカード",
     fullScreen: "大画面で表示",
-    staffPrompt: "店員さん、当てはまる方を指差し／タップしてください：",
-    yesButton: "はい（対応できます）",
+    yesButton: "はい",
     noButton: "ごめんなさい、できません",
     reactionYes: "🎉 ありがとうございます！安心してご注文いただけます。",
     reactionNo: "承知しました。別の安全なメニューを探しましょう！",
     scanOtherDish: "他の食べ物を見る（カメラに戻る）",
     staffFullscreenBadge: "店員さんにお見せください",
+    closeCard: "画面を閉じる",
 
     // 設定画面
     settingsHeader: "ハラール基準の設定",
@@ -230,13 +230,13 @@ const translations = {
     // 店員さんに見せる指差しカード
     staffCardTitle: "Staff Pointing Card",
     fullScreen: "Full Screen",
-    staffPrompt: "Restaurant staff: please point to or tap an answer:",
-    yesButton: "Yes (はい・対応できます)",
-    noButton: "No (ごめんなさい、できません)",
+    yesButton: "Yes (はい)",
+    noButton: "No (できません)",
     reactionYes: "🎉 Thank you! You can order with confidence.",
     reactionNo: "Understood. Let's find another safe menu option!",
     scanOtherDish: "Find other dishes (Return to Camera)",
     staffFullscreenBadge: "Please show this to staff",
+    closeCard: "Close",
 
     // 設定画面
     settingsHeader: "Halal Criteria Settings",
@@ -699,128 +699,6 @@ export default function HalalScanApp() {
     </button>
   );
 
-  // 全画面「店員さんに見せる指差しカード」モーダル
-  if (isFullscreenStaffView && analysisResult) {
-    const ingredientListTextJp =
-      analysisResult.concerning_ingredients.join("・") || "該当の食材";
-    const ingredientListTextEn =
-      analysisResult.concerning_ingredients_en?.join(", ") ||
-      analysisResult.concerning_ingredients.join(", ") ||
-      "these ingredients";
-
-    return (
-      <div className="fixed inset-0 z-50 bg-[#24C27A] text-white flex flex-col justify-between pt-14 px-6 pb-8 font-sans overflow-y-auto">
-        {/* トップバー */}
-        <div className="flex justify-between items-center">
-          <span className="px-4 py-1.5 rounded-full bg-white/20 text-xs font-black tracking-widest uppercase backdrop-blur-md">
-            {t.staffFullscreenBadge}
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setIsFullscreenStaffView(false);
-              setStaffResponse(null);
-            }}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all cursor-pointer"
-            aria-label="Close"
-          >
-            <XCircle className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* 店員さん向け特大フレーズ (日本語特大 ＋ 英語併記) */}
-        <div className="my-auto space-y-6 text-center bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-xl">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-white/80">店員さんにお見せください</span>
-            <p className="text-lg text-white/90 font-medium">すみません、宗教上の理由により、</p>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
-            「<span className="underline decoration-amber-300 decoration-4 underline-offset-4">{ingredientListTextJp}</span>」を使わずに調理して頂くことは可能でしょうか？
-          </p>
-          <p className="text-xs sm:text-sm text-white/80 font-medium border-t border-white/20 pt-3">
-            (Excuse me, for religious dietary reasons, could you please prepare this dish without{" "}
-            <span className="font-bold underline">{ingredientListTextEn}</span>?)
-          </p>
-        </div>
-
-        {/* 店員さん用指差し回答ボタン (はい / ごめんなさいできません) */}
-        <div className="space-y-4">
-          <p className="text-center text-xs text-white/90 font-bold">
-            {t.staffPrompt}
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {/* はい (Yes) */}
-            <button
-              type="button"
-              onClick={() => setStaffResponse("yes")}
-              className={`py-5 rounded-3xl font-black text-lg sm:text-xl shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
-                staffResponse === "yes"
-                  ? "bg-white text-[#24C27A] border-white ring-4 ring-emerald-300"
-                  : "bg-white text-[#24C27A] border-white hover:bg-emerald-50"
-              }`}
-            >
-              <Check className="w-7 h-7 stroke-[3]" />
-              <span className="text-base font-black">はい (Yes)</span>
-            </button>
-
-            {/* ごめんなさいできません (No) */}
-            <button
-              type="button"
-              onClick={() => setStaffResponse("no")}
-              className={`py-5 rounded-3xl font-black text-sm sm:text-base shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
-                staffResponse === "no"
-                  ? "bg-rose-600 text-white border-rose-300 ring-4 ring-rose-200"
-                  : "bg-white/20 text-white border-white/40 hover:bg-white/30"
-              }`}
-            >
-              <XCircle className="w-7 h-7 stroke-[2.5]" />
-              <span className="text-xs font-black">ごめんなさい、できません (No)</span>
-            </button>
-          </div>
-
-          {/* 回答後のリアクション案内 */}
-          {staffResponse === "yes" && (
-            <div className="p-4 bg-white rounded-3xl text-center space-y-2 shadow-2xl animate-fadeIn">
-              <p className="text-sm font-black text-[#24C27A]">
-                🎉 ありがとうございます！安心してご注文いただけます。
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFullscreenStaffView(false);
-                  setStaffResponse(null);
-                }}
-                className="w-full py-2.5 rounded-full bg-[#24C27A] text-white text-xs font-black"
-              >
-                画面を閉じる
-              </button>
-            </div>
-          )}
-
-          {staffResponse === "no" && (
-            <div className="p-4 bg-white rounded-3xl text-center space-y-3 shadow-2xl animate-fadeIn">
-              <p className="text-xs font-bold text-slate-700">
-                承知しました。別の安全なメニューを探しましょう！
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsFullscreenStaffView(false);
-                  setStaffResponse(null);
-                  setCurrentTab("camera");
-                }}
-                className="w-full py-3.5 rounded-full bg-[#24C27A] text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>他の食べ物を見る（カメラに戻る）</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#24C27A] flex items-center justify-center p-0 sm:p-6 font-sans antialiased selection:bg-[#24C27A] selection:text-white">
       {/* スマホ本体コンテナ (390px幅 iPhone比率) */}
@@ -834,6 +712,134 @@ export default function HalalScanApp() {
           className="hidden"
           onChange={handleFileUpload}
         />
+
+        {/* 店員さんに見せる指差しカード (スマホ枠内オーバーレイ) */}
+        {isFullscreenStaffView && analysisResult && (
+          <div className="absolute inset-0 z-40 bg-[#24C27A] text-white flex flex-col justify-between pt-14 px-6 pb-8 overflow-y-auto animate-fadeIn">
+            {/* トップバー: バッジ & 言語切替 & 閉じるボタン */}
+            <div className="flex justify-between items-center">
+              <span className="px-3.5 py-1.5 rounded-full bg-white/20 text-xs font-black tracking-wider uppercase backdrop-blur-md">
+                {t.staffFullscreenBadge}
+              </span>
+              <div className="flex items-center gap-2">
+                <LanguageToggle light />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsFullscreenStaffView(false);
+                    setStaffResponse(null);
+                  }}
+                  className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all cursor-pointer active:scale-95"
+                  aria-label="Close"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* 店員さん向け特大フレーズ (JPモードは日本語のみ、ENモードは日英対訳) */}
+            <div className="my-auto space-y-5 text-center bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-xl">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-white/80">
+                  {lang === "JP" ? "店員さんにお見せください" : "Please show this screen to staff"}
+                </p>
+                <p className="text-base text-white/95 font-medium">すみません、宗教上の理由により、</p>
+              </div>
+
+              {/* メイン質問文 */}
+              <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
+                「
+                <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
+                  {analysisResult.concerning_ingredients.join("・") || "該当の食材"}
+                </span>
+                」を使わずに調理して頂くことは可能でしょうか？
+              </p>
+
+              {/* ENモードのときのみ、英語話者向けの意味解説を表示 (JPモードでは混在させない) */}
+              {lang === "EN" && (
+                <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
+                  (Could you please prepare this dish without{" "}
+                  <span className="font-bold underline">
+                    {getConcerningIngredientsText(analysisResult)}
+                  </span>
+                  ?)
+                </p>
+              )}
+            </div>
+
+            {/* 店員さん用指差し回答ボタン (はい / ごめんなさいできません) */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {/* はい */}
+                <button
+                  type="button"
+                  onClick={() => setStaffResponse("yes")}
+                  className={`py-5 rounded-3xl font-black text-lg shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
+                    staffResponse === "yes"
+                      ? "bg-white text-[#24C27A] border-white ring-4 ring-emerald-300"
+                      : "bg-white text-[#24C27A] border-white hover:bg-emerald-50"
+                  }`}
+                >
+                  <Check className="w-7 h-7 stroke-[3]" />
+                  <span className="text-base font-black">{t.yesButton}</span>
+                </button>
+
+                {/* ごめんなさい、できません */}
+                <button
+                  type="button"
+                  onClick={() => setStaffResponse("no")}
+                  className={`py-5 rounded-3xl font-black text-sm shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
+                    staffResponse === "no"
+                      ? "bg-rose-600 text-white border-rose-300 ring-4 ring-rose-200"
+                      : "bg-white/20 text-white border-white/40 hover:bg-white/30"
+                  }`}
+                >
+                  <XCircle className="w-7 h-7 stroke-[2.5]" />
+                  <span className="text-xs font-black">{t.noButton}</span>
+                </button>
+              </div>
+
+              {/* 回答後のリアクション案内 */}
+              {staffResponse === "yes" && (
+                <div className="p-4 bg-white rounded-3xl text-center space-y-2.5 shadow-2xl animate-fadeIn">
+                  <p className="text-sm font-black text-[#24C27A]">
+                    {t.reactionYes}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFullscreenStaffView(false);
+                      setStaffResponse(null);
+                    }}
+                    className="w-full py-2.5 rounded-full bg-[#24C27A] text-white text-xs font-black hover:bg-[#1EA866] transition-all cursor-pointer"
+                  >
+                    {t.closeCard}
+                  </button>
+                </div>
+              )}
+
+              {staffResponse === "no" && (
+                <div className="p-4 bg-white rounded-3xl text-center space-y-3 shadow-2xl animate-fadeIn">
+                  <p className="text-xs font-bold text-slate-700">
+                    {t.reactionNo}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFullscreenStaffView(false);
+                      setStaffResponse(null);
+                      setCurrentTab("camera");
+                    }}
+                    className="w-full py-3.5 rounded-full bg-[#24C27A] text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>{t.scanOtherDish}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 保存完了トースト */}
         {showSavedToast && (
@@ -1393,15 +1399,11 @@ export default function HalalScanApp() {
 
               {/* 2つの主要な選択肢 */}
               <div className="space-y-3">
-                {/* 選択肢1: 食材を抜いて食べる */}
+                {/* 選択肢1: 食材を抜いて食べる (全画面店員指差しカードを開く) */}
                 {analysisResult.concerning_ingredients.length > 0 && (
                   <div
-                    onClick={() => setIsShowingStaffCard(true)}
-                    className={`rounded-3xl p-5 border-2 transition-all cursor-pointer shadow-sm active:scale-98 ${
-                      isShowingStaffCard
-                        ? "border-[#24C27A] bg-[#F0FDF4] ring-2 ring-emerald-200"
-                        : "border-slate-200 bg-white hover:border-[#24C27A]"
-                    }`}
+                    onClick={() => setIsFullscreenStaffView(true)}
+                    className="rounded-3xl p-5 border-2 border-slate-200 bg-white hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-2xl bg-[#24C27A] text-white flex items-center justify-center shrink-0 shadow-sm">
@@ -1467,18 +1469,15 @@ export default function HalalScanApp() {
                     <p className="text-base font-black text-slate-900 leading-snug">
                       「{analysisResult.concerning_ingredients.join("・")}を使わずに調理して頂くことは可能でしょうか？」
                     </p>
-                    <p className="text-[11px] text-slate-500">
-                      (Could you please prepare this dish without{" "}
-                      {analysisResult.concerning_ingredients_en?.join(", ") ||
-                        analysisResult.concerning_ingredients.join(", ")}
-                      ?)
-                    </p>
+                    {lang === "EN" && (
+                      <p className="text-[11px] text-slate-500">
+                        (Could you please prepare this dish without{" "}
+                        {getConcerningIngredientsText(analysisResult)}?)
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2 pt-1 border-t border-slate-100">
-                    <p className="text-center text-[10px] font-bold text-slate-400">
-                      {t.staffPrompt}
-                    </p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
