@@ -45,10 +45,11 @@ export async function POST(req: NextRequest) {
 Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返してください。
 
 【ユーザーのハラール基準】
-- 直接アルコール含有食品: ${prefs.alcohol_rules?.direct_alcohol || "strict"}
-- 発酵調味料（醤油・味噌など）: ${prefs.alcohol_rules?.fermented_zero || "strict"}
-- 加熱揮発アルコール（みりん・料理酒など）: ${prefs.alcohol_rules?.cooked_evaporated || "strict"}
-- 豚肉・豚骨・豚由来エキス: ${prefs.pork_level || "strict"}
+- 直接アルコール成分が含まれるもの: ${prefs.alcohol_rules?.direct_alcohol || "strict"}
+- 製造工程でアルコールが生成される可能性のあるもの（醤油など）: ${prefs.alcohol_rules?.fermented_zero || "conditional"}
+- アルコール成分を加熱して飛ばしたもの: ${prefs.alcohol_rules?.cooked_evaporated || "conditional"}
+- 豚または豚由来の食材: ${prefs.pork_level || "strict"}
+- 所定の処理がされていない豚肉以外の肉: ${prefs.non_halal_meat_level || "conditional"}
 
 【判定基準のルール】
 - 総合判定(overall_status):

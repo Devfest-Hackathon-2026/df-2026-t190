@@ -24,6 +24,8 @@ export interface UserPreferences {
   alcohol_rules: AlcoholRules;
   /** 豚肉・豚骨・豚由来エキスの許容レベル */
   pork_level: ToleranceLevel;
+  /** 所定の処理がされていない豚肉以外の肉（非ハラール認証の牛・鶏等） */
+  non_halal_meat_level?: ToleranceLevel;
   /** ゼラチン・動物性油脂の許容レベル */
   gelatin_level: ToleranceLevel;
   /** ユーザーによる自由記述の補足基準 */
@@ -38,6 +40,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     cooked_evaporated: 'conditional', // みりん加熱は要確認
   },
   pork_level: 'strict',            // 豚肉は厳格に避ける
+  non_halal_meat_level: 'conditional', // 非認証肉は場合によっては気にしない
   gelatin_level: 'conditional',    // ゼラチンは要確認
   custom_notes: '乳化剤やショートニングもできれば避けたいです。魚介類や野菜メインのメニューを好みます。',
 };
