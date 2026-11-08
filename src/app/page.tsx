@@ -29,6 +29,7 @@ import {
   ShieldAlert,
   Beef,
   Save,
+  FileText,
 } from "lucide-react";
 import { EnhancedAnalyzeResult } from "./api/analyze/route";
 import { ToleranceLevel } from "@/types";
@@ -57,9 +58,9 @@ const translations = {
     nonHalalMeatTitle: "未処理の豚以外の肉",
     directAlcoholTitle: "アルコール直接含有",
     cookedAlcoholTitle: "加熱揮発アルコール",
-    levelAvoid: "避ける",
-    levelConditional: "場合により可",
-    levelAllow: "気にしない",
+    levelAvoid: "❌ 避ける",
+    levelConditional: "🔺 場合により可",
+    levelAllow: "◯ 気にしない",
     aiDisclaimerTitle: "AIは間違えることがあります",
     aiDisclaimerDesc: "食べ物を選ぶ際の参考にしてください",
     scanCardSubtitle: "写真を撮るだけ！",
@@ -144,6 +145,10 @@ const translations = {
     radioAvoid: "避ける",
     radioConditional: "場合によっては\n気にしない",
     radioAllow: "気にしない",
+    customNotesTitle: "その他の自由記述（任意）",
+    customNotesBadge: "任意",
+    customNotesDesc: "アレルギーや特に避けたい調味料・食材などがあれば自由にご記入ください",
+    customNotesPlaceholder: "例: 甲殻類アレルギーがあります。乳化剤やショートニングもできれば避けたいです。",
     saveSettings: "設定を保存",
   },
   EN: {
@@ -164,9 +169,9 @@ const translations = {
     nonHalalMeatTitle: "Non-Halal meat (Beef, Chicken, etc.)",
     directAlcoholTitle: "Direct alcohol content",
     cookedAlcoholTitle: "Cooked / Evaporated alcohol",
-    levelAvoid: "Avoid",
-    levelConditional: "Conditional",
-    levelAllow: "Allow",
+    levelAvoid: "❌ Avoid",
+    levelConditional: "🔺 Conditional",
+    levelAllow: "◯ Allow",
     aiDisclaimerTitle: "AI may make mistakes",
     aiDisclaimerDesc: "Please use this as a reference when choosing food.",
     scanCardSubtitle: "Just snap a photo!",
@@ -251,6 +256,10 @@ const translations = {
     radioAvoid: "Avoid",
     radioConditional: "Conditional",
     radioAllow: "Allow",
+    customNotesTitle: "Additional Notes (Optional)",
+    customNotesBadge: "Optional",
+    customNotesDesc: "Enter any allergies or specific dietary preferences/restrictions",
+    customNotesPlaceholder: "e.g. Shellfish allergy. Prefer to avoid emulsifiers and shortening if possible.",
     saveSettings: "Save Settings",
   },
 };
@@ -275,6 +284,8 @@ export default function HalalScanApp() {
   const [alcoholCooked, setAlcoholCooked] = useState<ToleranceLevel>("conditional");
   const [porkPolicy, setPorkPolicy] = useState<ToleranceLevel>("strict");
   const [nonHalalMeatPolicy, setNonHalalMeatPolicy] = useState<ToleranceLevel>("conditional");
+  // 6. 任意の自由記述欄
+  const [customNotes, setCustomNotes] = useState("");
 
   // 保存完了トースト表示
   const [showSavedToast, setShowSavedToast] = useState(false);
@@ -438,8 +449,9 @@ export default function HalalScanApp() {
         },
         pork_level: porkPolicy,
         non_halal_meat_level: nonHalalMeatPolicy,
+        custom_notes: customNotes,
       },
-      custom_prompt: demoPreset || undefined,
+      custom_prompt: customNotes || demoPreset || undefined,
     };
 
     try {
@@ -534,7 +546,7 @@ export default function HalalScanApp() {
   }) => {
     return (
       <div className="grid grid-cols-3 gap-1.5 pt-2">
-        {/* 1. 避ける (赤基調) */}
+        {/* 1. 避ける (赤基調 ❌) */}
         <button
           type="button"
           onClick={() => onChange("strict")}
@@ -544,19 +556,13 @@ export default function HalalScanApp() {
               : "bg-rose-50/50 text-rose-700 border-rose-200/80 hover:bg-rose-100/60"
           }`}
         >
-          <div
-            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-              value === "strict" ? "border-white" : "border-rose-400"
-            }`}
-          >
-            {value === "strict" && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
+          <span className="text-base font-black leading-none mb-1">❌</span>
           <span className="text-[11px] font-black tracking-tight leading-tight">
             {t.radioAvoid}
           </span>
         </button>
 
-        {/* 2. 場合によっては気にしない (黄色基調) */}
+        {/* 2. 場合によっては気にしない (黄色基調 🔺) */}
         <button
           type="button"
           onClick={() => onChange("conditional")}
@@ -566,19 +572,13 @@ export default function HalalScanApp() {
               : "bg-amber-50/50 text-amber-800 border-amber-200/80 hover:bg-amber-100/60"
           }`}
         >
-          <div
-            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-              value === "conditional" ? "border-white" : "border-amber-400"
-            }`}
-          >
-            {value === "conditional" && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
+          <span className="text-base font-black leading-none mb-1">🔺</span>
           <span className="text-[10px] font-black tracking-tight leading-tight whitespace-pre-line">
             {t.radioConditional}
           </span>
         </button>
 
-        {/* 3. 気にしない (グレー基調) */}
+        {/* 3. 気にしない (グレー基調 ◯) */}
         <button
           type="button"
           onClick={() => onChange("allow")}
@@ -588,13 +588,7 @@ export default function HalalScanApp() {
               : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
           }`}
         >
-          <div
-            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
-              value === "allow" ? "border-white" : "border-slate-400"
-            }`}
-          >
-            {value === "allow" && <div className="w-2 h-2 rounded-full bg-white" />}
-          </div>
+          <span className="text-base font-black leading-none mb-1">◯</span>
           <span className="text-[11px] font-black tracking-tight leading-tight">
             {t.radioAllow}
           </span>
@@ -1454,6 +1448,36 @@ export default function HalalScanApp() {
                     </div>
                   </div>
                   <RadioOptionGroup value={nonHalalMeatPolicy} onChange={setNonHalalMeatPolicy} />
+                </div>
+
+                {/* 項目6: その他の自由記述欄（任意） */}
+                <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0 mt-0.5">
+                      <FileText className="w-4 h-4 text-[#24C27A]" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xs font-black text-slate-800">
+                          {t.customNotesTitle}
+                        </h3>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {t.customNotesBadge}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {t.customNotesDesc}
+                      </p>
+                    </div>
+                  </div>
+
+                  <textarea
+                    value={customNotes}
+                    onChange={(e) => setCustomNotes(e.target.value)}
+                    placeholder={t.customNotesPlaceholder}
+                    rows={3}
+                    className="w-full text-xs p-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#24C27A]/40 focus:border-[#24C27A] text-slate-800 placeholder:text-slate-400 resize-none transition-all"
+                  />
                 </div>
               </div>
             </div>

@@ -58,6 +58,7 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
 - アルコール成分を加熱して飛ばしたもの: ${prefs.alcohol_rules?.cooked_evaporated || "conditional"}
 - 豚または豚由来の食材: ${prefs.pork_level || "strict"}
 - 所定の処理がされていない豚肉以外の肉: ${prefs.non_halal_meat_level || "conditional"}
+- ユーザー任意の追加要望・アレルギー: ${prefs.custom_notes || custom_prompt || "特になし"}
 
 【判定基準のルール】
 - 総合判定(overall_status):
