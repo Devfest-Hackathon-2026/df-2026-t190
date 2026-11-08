@@ -17,6 +17,10 @@ import {
   QrCode,
   Scan,
   Globe,
+  Home,
+  Settings,
+  User,
+  Utensils,
 } from "lucide-react";
 
 type ActiveTab = "home" | "scan" | "detail" | "setting";
@@ -40,16 +44,16 @@ export default function HalalScanApp() {
       <div className="w-full max-w-[390px] h-[844px] bg-white rounded-none sm:rounded-[48px] shadow-2xl flex flex-col justify-between overflow-hidden relative border-0 sm:border-[10px] sm:border-slate-900">
         
         {/* ========================================================================= */}
-        {/* 画面1: ホーム画面 (Nutrional Today 風 Halal Today)                        */}
+        {/* 画面1: ホーム画面                                                         */}
         {/* ========================================================================= */}
         {currentTab === "home" && (
           <div className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAF9]">
             {/* 上部エメラルド曲面ヘッダー */}
-            <div className="bg-[#24C27A] pt-10 pb-8 px-6 rounded-b-[40px] text-white space-y-4 shadow-sm relative">
-              {/* トップバー: アバター & JP/EN 言語切り替え */}
+            <div className="bg-[#24C27A] pt-10 pb-7 px-6 rounded-b-[36px] text-white space-y-4 shadow-sm relative">
+              {/* トップバー: ユーザーアイコン & JP/EN 言語切り替え */}
               <div className="flex justify-between items-center">
-                <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg overflow-hidden shadow-sm">
-                  <span className="text-xl">🧕</span>
+                <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-white shadow-sm">
+                  <User className="w-5 h-5 text-white" />
                 </div>
                 <button
                   type="button"
@@ -62,57 +66,13 @@ export default function HalalScanApp() {
               </div>
 
               {/* タイトル */}
-              <div>
+              <div className="pt-1">
                 <h1 className="text-2xl font-black tracking-tight">TabeCan</h1>
                 <p className="text-xs text-white/90 mt-0.5 font-bold">
                   {lang === "JP"
                     ? "日本旅行中の食事レパートリーを増やそう！"
                     : "Expand your meal options while traveling in Japan!"}
                 </p>
-              </div>
-
-              {/* ヘッダー内フローティングカード */}
-              <div className="bg-white rounded-3xl p-4 text-slate-800 shadow-lg space-y-3">
-                <div className="grid grid-cols-2 gap-3 divide-x divide-slate-100">
-                  {/* 左: アルコール */}
-                  <div className="space-y-1.5 pr-2">
-                    <p className="text-[11px] font-bold text-slate-400">
-                      {lang === "JP" ? "アルコール基準" : "Alcohol Rules"}
-                    </p>
-                    <p className="text-sm font-black text-slate-800">
-                      {lang === "JP" ? "厳格 (Strict)" : "Strict"}
-                    </p>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-[#24C27A] h-full w-4/5 rounded-full" />
-                    </div>
-                  </div>
-
-                  {/* 右: 豚肉 */}
-                  <div className="space-y-1.5 pl-3">
-                    <p className="text-[11px] font-bold text-slate-400">
-                      {lang === "JP" ? "豚肉・エキス" : "Pork & Extracts"}
-                    </p>
-                    <p className="text-sm font-black text-rose-500">
-                      {lang === "JP" ? "避ける (Avoid)" : "Avoid"}
-                    </p>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-rose-500 h-full w-full rounded-full" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-1 border-t border-slate-100 flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 font-semibold">
-                    {lang === "JP" ? "基準のカスタマイズ" : "Customize rules"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentTab("setting")}
-                    className="text-[#24C27A] font-bold hover:underline flex items-center"
-                  >
-                    More detail <ChevronRight className="w-3 h-3 ml-0.5" />
-                  </button>
-                </div>
               </div>
             </div>
 
@@ -131,8 +91,8 @@ export default function HalalScanApp() {
                       : "Please use this as a reference when choosing food."}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-2xl shadow-inner shrink-0">
-                  🍱
+                <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-[#24C27A] shadow-inner shrink-0">
+                  <Utensils className="w-6 h-6 text-[#24C27A]" />
                 </div>
               </div>
 
@@ -494,42 +454,45 @@ export default function HalalScanApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* ボトムナビゲーションバー (中央スキャンボタンが丸く浮き出た神デザイン！)     */}
+        {/* ボトムナビゲーションバー (アイコンのみのミニマル・モダンデザイン！)         */}
         {/* ========================================================================= */}
-        <nav className="bg-white border-t border-slate-100 px-8 py-3 flex justify-between items-center z-30 shadow-lg relative">
-          {/* Home */}
+        <nav className="bg-white border-t border-slate-100 px-10 py-3.5 flex justify-between items-center z-30 shadow-lg relative">
+          {/* Home アイコン */}
           <button
             type="button"
             onClick={() => setCurrentTab("home")}
-            className={`flex flex-col items-center gap-1 transition-all ${
-              currentTab === "home" ? "text-[#24C27A] font-black" : "text-slate-400 hover:text-slate-600"
+            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all ${
+              currentTab === "home" ? "text-[#24C27A] scale-110" : "text-slate-400 hover:text-slate-600"
             }`}
+            aria-label="Home"
           >
-            <span className="text-xs font-extrabold">Home</span>
-            {currentTab === "home" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A]" />}
+            <Home className="w-6 h-6 stroke-[2.2]" />
+            {currentTab === "home" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A] mt-1" />}
           </button>
 
           {/* 中央: 浮き出た丸いスキャンボタン */}
           <button
             type="button"
             onClick={() => setCurrentTab("scan")}
-            className="flex flex-col items-center -mt-6 group active:scale-95 transition-all"
+            className="flex flex-col items-center -mt-7 group active:scale-95 transition-all"
+            aria-label="Scan"
           >
             <div className="w-14 h-14 rounded-full bg-[#24C27A] text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 border-4 border-white group-hover:scale-105 transition-all">
-              <Scan className="w-6 h-6" />
+              <Scan className="w-6 h-6 stroke-[2.5]" />
             </div>
           </button>
 
-          {/* Setting */}
+          {/* Setting アイコン */}
           <button
             type="button"
             onClick={() => setCurrentTab("setting")}
-            className={`flex flex-col items-center gap-1 transition-all ${
-              currentTab === "setting" ? "text-[#24C27A] font-black" : "text-slate-400 hover:text-slate-600"
+            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all ${
+              currentTab === "setting" ? "text-[#24C27A] scale-110" : "text-slate-400 hover:text-slate-600"
             }`}
+            aria-label="Settings"
           >
-            <span className="text-xs font-extrabold">Setting</span>
-            {currentTab === "setting" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A]" />}
+            <Settings className="w-6 h-6 stroke-[2.2]" />
+            {currentTab === "setting" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A] mt-1" />}
           </button>
         </nav>
 
