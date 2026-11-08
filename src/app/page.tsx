@@ -16,12 +16,14 @@ import {
   AlertTriangle,
   QrCode,
   Scan,
+  Globe,
 } from "lucide-react";
 
 type ActiveTab = "home" | "scan" | "detail" | "setting";
 
 export default function HalalScanApp() {
   const [currentTab, setCurrentTab] = useState<ActiveTab>("home");
+  const [lang, setLang] = useState<"JP" | "EN">("JP");
 
   // 設定状態
   const [alcoholDirect, setAlcoholDirect] = useState<"strict" | "allow">("strict");
@@ -44,26 +46,29 @@ export default function HalalScanApp() {
           <div className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAF9]">
             {/* 上部エメラルド曲面ヘッダー */}
             <div className="bg-[#24C27A] pt-10 pb-8 px-6 rounded-b-[40px] text-white space-y-4 shadow-sm relative">
-              {/* トップバー: アバター & 通知 */}
+              {/* トップバー: アバター & JP/EN 言語切り替え */}
               <div className="flex justify-between items-center">
                 <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg overflow-hidden shadow-sm">
                   <span className="text-xl">🧕</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert("通知はありません")}
-                  className="px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-white/30 transition-all border border-white/20"
+                  onClick={() => setLang(lang === "JP" ? "EN" : "JP")}
+                  className="px-3.5 py-1.5 rounded-full bg-white/25 backdrop-blur-md text-xs font-black flex items-center gap-1.5 hover:bg-white/35 transition-all border border-white/30 text-white shadow-xs"
                 >
-                  <Bell className="w-3.5 h-3.5" />
-                  <span>Notification</span>
-                  <span className="w-2 h-2 rounded-full bg-amber-300" />
+                  <Globe className="w-3.5 h-3.5 text-white" />
+                  <span>{lang === "JP" ? "JP / EN" : "EN / JP"}</span>
                 </button>
               </div>
 
               {/* タイトル */}
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight">Halal Today</h1>
-                <p className="text-xs text-white/80 mt-0.5 font-medium">あなたの信仰に寄り添うスマート食選び</p>
+                <h1 className="text-2xl font-black tracking-tight">TabeCan</h1>
+                <p className="text-xs text-white/90 mt-0.5 font-bold">
+                  {lang === "JP"
+                    ? "日本旅行中の食事レパートリーを増やそう！"
+                    : "Expand your meal options while traveling in Japan!"}
+                </p>
               </div>
 
               {/* ヘッダー内フローティングカード */}
@@ -71,8 +76,12 @@ export default function HalalScanApp() {
                 <div className="grid grid-cols-2 gap-3 divide-x divide-slate-100">
                   {/* 左: アルコール */}
                   <div className="space-y-1.5 pr-2">
-                    <p className="text-[11px] font-bold text-slate-400">アルコール基準</p>
-                    <p className="text-sm font-black text-slate-800">厳格 (Strict)</p>
+                    <p className="text-[11px] font-bold text-slate-400">
+                      {lang === "JP" ? "アルコール基準" : "Alcohol Rules"}
+                    </p>
+                    <p className="text-sm font-black text-slate-800">
+                      {lang === "JP" ? "厳格 (Strict)" : "Strict"}
+                    </p>
                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                       <div className="bg-[#24C27A] h-full w-4/5 rounded-full" />
                     </div>
@@ -80,8 +89,12 @@ export default function HalalScanApp() {
 
                   {/* 右: 豚肉 */}
                   <div className="space-y-1.5 pl-3">
-                    <p className="text-[11px] font-bold text-slate-400">豚肉・エキス</p>
-                    <p className="text-sm font-black text-rose-500">避ける (Avoid)</p>
+                    <p className="text-[11px] font-bold text-slate-400">
+                      {lang === "JP" ? "豚肉・エキス" : "Pork & Extracts"}
+                    </p>
+                    <p className="text-sm font-black text-rose-500">
+                      {lang === "JP" ? "避ける (Avoid)" : "Avoid"}
+                    </p>
                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                       <div className="bg-rose-500 h-full w-full rounded-full" />
                     </div>
@@ -89,7 +102,9 @@ export default function HalalScanApp() {
                 </div>
 
                 <div className="pt-1 border-t border-slate-100 flex justify-between items-center text-[11px]">
-                  <span className="text-slate-400 font-semibold">基準のカスタマイズ</span>
+                  <span className="text-slate-400 font-semibold">
+                    {lang === "JP" ? "基準のカスタマイズ" : "Customize rules"}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setCurrentTab("setting")}
@@ -103,61 +118,43 @@ export default function HalalScanApp() {
 
             {/* コンテンツエリア */}
             <div className="p-5 space-y-5">
-              {/* プロモーション/AI免責カード */}
+              {/* AI注意・参考カード */}
               <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100/80 flex items-center justify-between">
-                <div className="space-y-1 max-w-[200px]">
-                  <p className="text-xs font-extrabold text-slate-800 leading-snug">
-                    AIは間違えることがあります
+                <div className="space-y-1 max-w-[220px]">
+                  <p className="text-xs font-black text-slate-800 leading-snug flex items-center gap-1.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>{lang === "JP" ? "AIは間違えることがあります" : "AI may make mistakes"}</span>
                   </p>
-                  <p className="text-[11px] text-[#24C27A] font-bold hover:underline cursor-pointer">
-                    安全な確認方法を見る
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {lang === "JP"
+                      ? "食べ物を選ぶ際の参考にしてください"
+                      : "Please use this as a reference when choosing food."}
                   </p>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-2xl shadow-inner">
-                  🥗
+                <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-2xl shadow-inner shrink-0">
+                  🍱
                 </div>
               </div>
 
-              {/* Suggestion Meal */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-sm font-black text-slate-800">Suggestion Meal</h2>
-                  <span className="text-[11px] text-slate-400 font-semibold">安心メニュー</span>
+              {/* スキャンへのダイレクトアクションカード */}
+              <div
+                onClick={() => setCurrentTab("scan")}
+                className="bg-gradient-to-br from-[#24C27A] to-[#1EA866] rounded-3xl p-6 text-white shadow-md cursor-pointer hover:shadow-lg transition-all active:scale-98 flex items-center justify-between group"
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-white/80">
+                    {lang === "JP" ? "写真を撮るだけ！" : "Just snap a photo!"}
+                  </p>
+                  <h3 className="text-base font-black">
+                    {lang === "JP" ? "料理・メニューをスキャン" : "Scan Food or Menu"}
+                  </h3>
+                  <p className="text-[11px] text-white/90 font-medium pt-1">
+                    {lang === "JP" ? "タップしてカメラを起動 ＞" : "Tap to open camera ＞"}
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {/* カード 1 */}
-                  <div
-                    onClick={() => {
-                      setCurrentTab("detail");
-                    }}
-                    className="bg-white rounded-3xl p-3.5 shadow-sm border border-slate-100/80 space-y-2.5 cursor-pointer hover:shadow-md transition-all active:scale-98"
-                  >
-                    <div className="aspect-square rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-4xl overflow-hidden relative">
-                      🍲
-                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
-                        要確認
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-800 line-clamp-1">にくじゃが (Nikujaga)</p>
-                      <p className="text-[10px] text-slate-400 font-medium">豚肉・みりん含有</p>
-                    </div>
-                  </div>
-
-                  {/* カード 2 */}
-                  <div className="bg-white rounded-3xl p-3.5 shadow-sm border border-slate-100/80 space-y-2.5">
-                    <div className="aspect-square rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-4xl overflow-hidden relative">
-                      🍣
-                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#24C27A] text-white text-[9px] font-black">
-                        Safe
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-800 line-clamp-1">海鮮丼 (Seafood Bowl)</p>
-                      <p className="text-[10px] text-slate-400 font-medium">アルコールなし醤油</p>
-                    </div>
-                  </div>
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border-2 border-white/40 group-hover:scale-105 transition-all shrink-0">
+                  <Scan className="w-7 h-7" />
                 </div>
               </div>
             </div>
