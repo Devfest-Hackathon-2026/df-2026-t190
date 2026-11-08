@@ -4,19 +4,26 @@ import { UserPreferences, DEFAULT_USER_PREFERENCES } from "@/types";
 
 export interface EnhancedAnalyzeResult {
   dish_name: string;
+  dish_name_en?: string;
   overall_status: "safe" | "warning" | "danger"; // 安全 | 注意 | 要注意
   status_label: string; // 「安全」「注意」「要注意」
   summary_message: string;
+  summary_message_en?: string;
   checkpoints: {
     name: string;
+    name_en?: string;
     level: "safe" | "warning" | "danger";
     level_label: "安全" | "注意" | "要注意";
     reason: string;
+    reason_en?: string;
   }[];
   concerning_ingredients: string[]; // 注意・要注意となった食材リスト (例: ["豚肉", "みりん"])
+  concerning_ingredients_en?: string[]; // 英語リスト (例: ["Pork", "Mirin"])
   proposal: {
-    remove_option_text: string; // 例: "豚肉を抜いてこの料理を食べますか？"
-    staff_request_phrase: string; // 例: "すみません、豚肉を使わずに調理して頂くことは可能でしょうか？"
+    remove_option_text: string;
+    remove_option_text_en?: string;
+    staff_request_phrase: string;
+    staff_request_phrase_en?: string;
   };
 }
 
@@ -34,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // APIキーがない、または画像が指定されていない場合のフォールバック（高品質モック）
     if (!apiKey || !image_data || image_data === "demo") {
-      return NextResponse.json(getMockResult(prefs));
+      return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
 
     try {
@@ -42,6 +49,7 @@ export async function POST(req: NextRequest) {
       const prompt = `
 あなたは日本の飲食店・食品のハラール成分を判定する専門家AIです。
 提供された料理/メニューの画像を分析し、ユーザーのハラール基準に照らし合わせて以下のJSONのみを出力してください。
+訪日外国人観光客が日本語と英語を切り替えて利用できるよう、日本語と英語（_en）の両方のフィールドを必ず提供してください。
 Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返してください。
 
 【ユーザーのハラール基準】
@@ -60,21 +68,28 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
 【必須JSONフォーマット】
 {
   "dish_name": "料理名（例: にくじゃが、醤油ラーメン、野菜サラダ）",
+  "dish_name_en": "Dish name in English (e.g., Nikujaga, Shoyu Ramen, Vegetable Salad)",
   "overall_status": "safe" | "warning" | "danger",
   "status_label": "安全" | "注意" | "要注意",
   "summary_message": "判定の理由の要約（日本語1〜2行）",
+  "summary_message_en": "Summary of analysis in English (1-2 sentences)",
   "checkpoints": [
     {
-      "name": "食材・調味料名（例: 豚肉、みりん、醤油、野菜など）",
+      "name": "食材・調味料名（日本語）",
+      "name_en": "Ingredient name in English",
       "level": "safe" | "warning" | "danger",
       "level_label": "安全" | "注意" | "要注意",
-      "reason": "なぜその判定になったのか具体的な理由（日本語）"
+      "reason": "なぜその判定になったのか具体的な理由（日本語）",
+      "reason_en": "Detailed reason in English"
     }
   ],
-  "concerning_ingredients": ["注意または要注意の食材リスト（例: 豚肉、みりん）。安全な場合は空配列 []"],
+  "concerning_ingredients": ["注意または要注意の食材リスト（日本語）。安全な場合は空配列 []"],
+  "concerning_ingredients_en": ["List of concerning ingredients in English. Empty array [] if safe"],
   "proposal": {
-    "remove_option_text": "注意または要注意の食材がある場合は「〇〇を抜いてこの料理を食べますか？」、ない場合は「そのまま安心してお召し上がりいただけます」",
-    "staff_request_phrase": "注意または要注意の食材がある場合は「すみません、宗教上の理由により、〇〇を使わずに調理して頂くことは可能でしょうか？」、ない場合は「このまま注文可能です」"
+    "remove_option_text": "〇〇を抜いてこの料理を食べますか？",
+    "remove_option_text_en": "Would you like to eat this dish without [ingredients]?",
+    "staff_request_phrase": "すみません、宗教上の理由により、〇〇を使わずに調理して頂くことは可能でしょうか？",
+    "staff_request_phrase_en": "Could you please prepare this dish without [ingredients]?"
   }
 }
 `;
@@ -110,7 +125,7 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
       return NextResponse.json(result);
     } catch (aiError) {
       console.warn("Gemini call fallback:", aiError);
-      return NextResponse.json(getMockResult(prefs));
+      return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
   } catch (error) {
     console.error("API Error:", error);
@@ -118,36 +133,93 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
   }
 }
 
-function getMockResult(prefs: UserPreferences): EnhancedAnalyzeResult {
+function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedAnalyzeResult {
+  if (customPreset === "ramen") {
+    return {
+      dish_name: "醤油ラーメン (Shoyu Ramen)",
+      dish_name_en: "Shoyu Ramen (Soy Sauce Ramen)",
+      overall_status: "danger",
+      status_label: "要注意",
+      summary_message: "豚チャーシューがトッピングされており、スープに豚骨・鶏ガラエキスが使用されています。",
+      summary_message_en: "Topped with pork chashu, and the soup broth contains pork and chicken bone extract.",
+      checkpoints: [
+        {
+          name: "豚チャーシュー (Pork Chashu)",
+          name_en: "Pork Chashu (Braised Pork Belly)",
+          level: "danger",
+          level_label: "要注意",
+          reason: "豚肉スライスがそのまま乗せられており、厳格なハラール基準に反します。",
+          reason_en: "Sliced pork meat is directly served on top, which violates strict halal guidelines.",
+        },
+        {
+          name: "ラーメンスープ (Broth & Sauce)",
+          name_en: "Ramen Broth (Pork & Soy Sauce Base)",
+          level: "warning",
+          level_label: "注意",
+          reason: "スープの出汁に豚骨エキスやみりんが溶け込んでおり、完全分離は困難です。",
+          reason_en: "Broth contains pork bone extract and mirin; separation is not possible once cooked.",
+        },
+        {
+          name: "麺・ネギ・煮卵 (Noodles & Toppings)",
+          name_en: "Noodles, Green Onions & Boiled Egg",
+          level: "safe",
+          level_label: "安全",
+          reason: "小麦麺や野菜、鶏卵自体は植物・卵由来成分です。",
+          reason_en: "Wheat noodles, vegetables, and boiled eggs themselves are halal-friendly.",
+        },
+      ],
+      concerning_ingredients: ["豚チャーシュー", "豚骨スープ"],
+      concerning_ingredients_en: ["Pork Chashu", "Pork Broth"],
+      proposal: {
+        remove_option_text: "チャーシューを抜いてこの料理を食べますか？",
+        remove_option_text_en: "Would you like to eat this dish without Chashu pork?",
+        staff_request_phrase: "すみません、私は宗教上の理由で豚肉を食べることができません。チャーシューを抜いて調理して頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without chashu pork?",
+      },
+    };
+  }
+
+  // デフォルト: にくじゃが (Nikujaga)
   return {
     dish_name: "にくじゃが (Nikujaga)",
+    dish_name_en: "Nikujaga (Simmered Beef/Pork & Potato)",
     overall_status: "danger",
     status_label: "要注意",
     summary_message: "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。",
+    summary_message_en: "Contains pork meat, and the broth likely contains cooked mirin and cooking sake.",
     checkpoints: [
       {
-        name: "ぶた肉",
+        name: "ぶた肉 (Pork Meat)",
+        name_en: "Pork Meat & Essence",
         level: "danger",
         level_label: "要注意",
         reason: "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。",
+        reason_en: "Sliced pork belly is used, and pork essence is extracted into the simmering broth.",
       },
       {
-        name: "加熱みりん・料理酒",
+        name: "加熱みりん・料理酒 (Cooked Mirin)",
+        name_en: "Cooked Mirin & Cooking Sake",
         level: "warning",
         level_label: "注意",
         reason: "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。",
+        reason_en: "Most alcohol evaporates during simmering, but trace residue from seasonings may remain.",
       },
       {
-        name: "じゃがいも・人参・玉ねぎ",
+        name: "じゃがいも・人参・玉ねぎ (Vegetables)",
+        name_en: "Potatoes, Carrots, Onions",
         level: "safe",
         level_label: "安全",
         reason: "100%植物性食材であり、ハラール上全く問題ありません。",
+        reason_en: "100% plant-based ingredients and completely halal.",
       },
     ],
     concerning_ingredients: ["ぶた肉", "加熱みりん"],
+    concerning_ingredients_en: ["Pork Meat", "Cooked Mirin"],
     proposal: {
       remove_option_text: "ぶた肉を抜いてこの料理を食べますか？",
+      remove_option_text_en: "Would you like to eat this dish without pork?",
       staff_request_phrase: "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
+      staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without pork?",
     },
   };
 }

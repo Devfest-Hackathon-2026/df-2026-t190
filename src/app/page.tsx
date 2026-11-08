@@ -460,50 +460,55 @@ export default function HalalScanApp() {
       console.warn("Analysis fallback:", err);
       // フォールバック結果
       setAnalysisResult({
-        dish_name: lang === "JP" ? "にくじゃが (Nikujaga)" : "Nikujaga (Simmered Beef/Pork & Potato)",
+        dish_name: "にくじゃが (Nikujaga)",
+        dish_name_en: "Nikujaga (Simmered Beef/Pork & Potato)",
         overall_status: porkPolicy === "strict" ? "danger" : "warning",
-        status_label: porkPolicy === "strict" ? t.statusHighCaution : t.statusCaution,
+        status_label: porkPolicy === "strict" ? "要注意" : "注意",
         summary_message:
-          lang === "JP"
-            ? "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。"
-            : "Contains pork meat, and the broth likely contains cooked mirin and cooking sake.",
+          "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。",
+        summary_message_en:
+          "Contains pork meat, and the broth likely contains cooked mirin and cooking sake.",
         checkpoints: [
           {
-            name: t.porkTitle,
+            name: "ぶた肉 (Pork Meat)",
+            name_en: "Pork Meat & Essence",
             level: porkPolicy === "strict" ? "danger" : "safe",
             level_label: porkPolicy === "strict" ? "要注意" : "安全",
             reason:
-              lang === "JP"
-                ? "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。"
-                : "Sliced pork belly is used, and pork essence is extracted into the simmering broth.",
+              "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。",
+            reason_en:
+              "Sliced pork belly is used, and pork essence is extracted into the simmering broth.",
           },
           {
-            name: t.cookedAlcoholTitle,
+            name: "加熱みりん・料理酒 (Cooked Mirin)",
+            name_en: "Cooked Mirin & Cooking Sake",
             level: alcoholCooked === "strict" ? "warning" : "safe",
             level_label: alcoholCooked === "strict" ? "注意" : "安全",
             reason:
-              lang === "JP"
-                ? "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。"
-                : "Most alcohol evaporates during cooking, but trace residues from seasoning may remain.",
+              "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。",
+            reason_en:
+              "Most alcohol evaporates during simmering, but trace residue from seasonings may remain.",
           },
           {
-            name: lang === "JP" ? "じゃがいも・人参・玉ねぎ" : "Potatoes, Carrots, Onions",
+            name: "じゃがいも・人参・玉ねぎ (Vegetables)",
+            name_en: "Potatoes, Carrots, Onions",
             level: "safe",
             level_label: "安全",
             reason:
-              lang === "JP"
-                ? "100%植物性食材であり、ハラール上全く問題ありません。"
-                : "100% plant-based ingredients and completely halal.",
+              "100%植物性食材であり、ハラール上全く問題ありません。",
+            reason_en:
+              "100% plant-based ingredients and completely halal.",
           },
         ],
-        concerning_ingredients: lang === "JP" ? ["ぶた肉", "加熱みりん"] : ["Pork", "Mirin"],
+        concerning_ingredients: ["ぶた肉", "加熱みりん"],
+        concerning_ingredients_en: ["Pork Meat", "Cooked Mirin"],
         proposal: {
-          remove_option_text:
-            lang === "JP"
-              ? "ぶた肉を抜いてこの料理を食べますか？"
-              : "Eat this dish without pork?",
+          remove_option_text: "ぶた肉を抜いてこの料理を食べますか？",
+          remove_option_text_en: "Would you like to eat this dish without pork?",
           staff_request_phrase:
             "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
+          staff_request_phrase_en:
+            "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without pork?",
         },
       });
       setCurrentTab("result");
@@ -1007,24 +1012,25 @@ export default function HalalScanApp() {
         {/* ========================================================================= */}
         {currentTab === "result" && analysisResult && (
           <div className="flex-1 flex flex-col justify-between overflow-y-auto bg-[#F8FAF9]">
-            <div className="p-6 space-y-5">
+            <div className="pt-10 px-6 pb-6 space-y-5">
               <div className="flex justify-between items-center">
                 <button
                   type="button"
                   onClick={() => setCurrentTab("camera")}
-                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
+                  aria-label={t.back}
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-sm font-black text-slate-900">{t.resultHeader}</h2>
+                <h2 className="text-base font-black text-slate-900">{t.resultHeader}</h2>
                 {/* 言語切替ボタン */}
                 <button
                   type="button"
                   onClick={toggleLanguage}
-                  className="px-2.5 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-white shadow-xs border border-slate-200 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Globe className="w-3 h-3 text-[#24C27A]" />
-                  <span>{lang}</span>
+                  <Globe className="w-3.5 h-3.5 text-[#24C27A]" />
+                  <span>{t.langToggleText}</span>
                 </button>
               </div>
 
@@ -1041,9 +1047,15 @@ export default function HalalScanApp() {
                   )}
                 </div>
                 <div>
-                  <h1 className="text-lg font-black text-slate-900">{analysisResult.dish_name}</h1>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    {analysisResult.summary_message}
+                  <h1 className="text-lg font-black text-slate-900">
+                    {lang === "EN"
+                      ? analysisResult.dish_name_en || analysisResult.dish_name
+                      : analysisResult.dish_name}
+                  </h1>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5 leading-relaxed">
+                    {lang === "EN"
+                      ? analysisResult.summary_message_en || analysisResult.summary_message
+                      : analysisResult.summary_message}
                   </p>
                 </div>
               </div>
@@ -1114,7 +1126,9 @@ export default function HalalScanApp() {
                       className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs space-y-1.5"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-black text-slate-900">{cp.name}</span>
+                        <span className="text-xs font-black text-slate-900">
+                          {lang === "EN" ? cp.name_en || cp.name : cp.name}
+                        </span>
                         <span
                           className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
                             cp.level === "danger"
@@ -1132,7 +1146,7 @@ export default function HalalScanApp() {
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                        {cp.reason}
+                        {lang === "EN" ? cp.reason_en || cp.reason : cp.reason}
                       </p>
                     </div>
                   ))}
@@ -1159,23 +1173,24 @@ export default function HalalScanApp() {
         {/* ========================================================================= */}
         {currentTab === "proposal" && analysisResult && (
           <div className="flex-1 flex flex-col justify-between overflow-y-auto bg-[#F8FAF9]">
-            <div className="p-6 space-y-5">
+            <div className="pt-10 px-6 pb-6 space-y-5">
               <div className="flex justify-between items-center">
                 <button
                   type="button"
                   onClick={() => setCurrentTab("result")}
-                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  className="w-10 h-10 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
+                  aria-label={t.back}
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h2 className="text-sm font-black text-slate-900">{t.proposalHeader}</h2>
+                <h2 className="text-base font-black text-slate-900">{t.proposalHeader}</h2>
                 <button
                   type="button"
                   onClick={toggleLanguage}
-                  className="px-2.5 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-full bg-white shadow-xs border border-slate-200 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Globe className="w-3 h-3 text-[#24C27A]" />
-                  <span>{lang}</span>
+                  <Globe className="w-3.5 h-3.5 text-[#24C27A]" />
+                  <span>{t.langToggleText}</span>
                 </button>
               </div>
 
@@ -1219,7 +1234,7 @@ export default function HalalScanApp() {
                         <h3 className="text-sm font-black text-slate-900 leading-snug">
                           {lang === "JP"
                             ? `${analysisResult.concerning_ingredients.join("・")}${t.option1Action}`
-                            : `${t.option1Action}${analysisResult.concerning_ingredients.join(", ")}`}
+                            : `${t.option1Action}${analysisResult.concerning_ingredients_en?.join(", ") || analysisResult.concerning_ingredients.join(", ")}`}
                         </h3>
                         <p className="text-[11px] text-slate-500 mt-1">{t.option1Desc}</p>
                       </div>
@@ -1274,7 +1289,9 @@ export default function HalalScanApp() {
                     </p>
                     <p className="text-[11px] text-slate-500">
                       (Could you please prepare this dish without{" "}
-                      {analysisResult.concerning_ingredients.join(", ")}?)
+                      {analysisResult.concerning_ingredients_en?.join(", ") ||
+                        analysisResult.concerning_ingredients.join(", ")}
+                      ?)
                     </p>
                   </div>
 
@@ -1337,7 +1354,7 @@ export default function HalalScanApp() {
         {/* 画面6: ユーザー設定画面 (改善版：5項目 ＆ 赤・黄・グレー ラジオボタン)     */}
         {/* ========================================================================= */}
         {currentTab === "setting" && (
-          <div className="flex-1 flex flex-col justify-between p-5 bg-[#F8FAF9] overflow-y-auto">
+          <div className="flex-1 flex flex-col justify-between pt-10 px-6 pb-6 bg-[#F8FAF9] overflow-y-auto">
             <div className="space-y-4">
               {/* ヘッダー */}
               <div className="flex justify-between items-center">
@@ -1345,12 +1362,13 @@ export default function HalalScanApp() {
                   <button
                     type="button"
                     onClick={() => setCurrentTab("home")}
-                    className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer"
+                    className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer"
+                    aria-label={t.back}
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-5 h-5" />
                   </button>
                   <div>
-                    <h1 className="text-lg font-black text-slate-900">{t.settingsHeader}</h1>
+                    <h1 className="text-base font-black text-slate-900">{t.settingsHeader}</h1>
                     <p className="text-[11px] text-slate-500 font-medium">{t.settingsSub}</p>
                   </div>
                 </div>
@@ -1359,10 +1377,10 @@ export default function HalalScanApp() {
                 <button
                   type="button"
                   onClick={toggleLanguage}
-                  className="px-2.5 py-1 rounded-full bg-white text-xs font-bold text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                  className="px-3.5 py-1.5 rounded-full bg-white text-xs font-black text-slate-800 shadow-xs border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <Globe className="w-3.5 h-3.5 text-[#24C27A]" />
-                  <span>{lang}</span>
+                  <span>{t.langToggleText}</span>
                 </button>
               </div>
 
