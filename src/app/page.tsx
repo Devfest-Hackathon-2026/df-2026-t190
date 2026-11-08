@@ -35,22 +35,245 @@ import { ToleranceLevel } from "@/types";
 
 type ActiveTab = "home" | "camera" | "analyzing" | "result" | "proposal" | "setting";
 
+// =========================================================================
+// 多言語翻訳辞書 (日本語 / 英語)
+// =========================================================================
+const translations = {
+  JP: {
+    // 共通
+    langToggleText: "JP / EN",
+    homeNav: "ホーム",
+    scanNav: "スキャン",
+    settingsNav: "設定",
+    back: "戻る",
+    savedToast: "設定を保存しました",
+
+    // ホーム画面
+    appName: "TabeCan",
+    appTagline: "日本旅行中の食事レパートリーを増やそう！",
+    criteriaTitle: "現在のハラール基準",
+    editCriteria: "変更する",
+    porkTitle: "豚または豚由来の食材",
+    nonHalalMeatTitle: "未処理の豚以外の肉",
+    directAlcoholTitle: "アルコール直接含有",
+    cookedAlcoholTitle: "加熱揮発アルコール",
+    levelAvoid: "避ける",
+    levelConditional: "場合により可",
+    levelAllow: "気にしない",
+    aiDisclaimerTitle: "AIは間違えることがあります",
+    aiDisclaimerDesc: "食べ物を選ぶ際の参考にしてください",
+    scanCardSubtitle: "写真を撮るだけ！",
+    scanCardTitle: "料理・メニューをスキャン",
+    scanCardAction: "カメラを起動する",
+    trySampleTitle: "ワンタップでAI判定を試す",
+    sampleNikujagaTitle: "🍲 にくじゃが",
+    sampleNikujagaDesc: "豚肉・みりん判定テスト",
+    sampleRamenTitle: "🍜 醤油ラーメン",
+    sampleRamenDesc: "チャーシュー・出汁テスト",
+
+    // カメラ画面
+    cameraPreparing: "カメラを準備中...",
+    cameraErrorPermission:
+      "カメラへのアクセスが拒否されました。設定でカメラを許可するか、下のアルバムから選択をお試しください。",
+    cameraFallbackGuide:
+      "カメラを起動できませんでした。下の「アルバムから選択」または「サンプル料理」をお試しください。",
+    restartCamera: "カメラを再起動",
+    flashOn: "Flash on",
+    flashOff: "Flash off",
+    cameraGuide: "料理やメニュー全体を枠内に収めてください",
+    selectFromAlbum: "アルバムから選択",
+    trySample: "サンプル料理で試す",
+    takePhoto: "写真を撮影",
+
+    // 解析中画面
+    analyzingTitle: "AIが料理を分析中...",
+    analyzingDesc:
+      "豚肉・アルコール・調味料などを照合し、あなたの信仰基準に合致するか判定しています。",
+
+    // 解析結果画面
+    resultHeader: "AI解析結果",
+    statusHighCaution: "要注意",
+    statusCaution: "注意",
+    statusSafe: "安全",
+    statusDangerSummary: "基準に合わない食材が含まれている可能性があります",
+    statusWarningSummary: "調味料や製法などの確認が推奨されます",
+    statusSafeSummary: "設定基準に照らし合わせて安全と判断されました",
+    checkpointsHeader: "成分チェックポイント",
+    nextToProposal: "次へ: 食事の提案・選択肢を見る",
+
+    // 提案画面
+    proposalHeader: "あなたへのご提案",
+    proposalBadge: "Suggestion for You",
+    proposalWarningTitle: "このメニューはそのままでは難しい可能性があります",
+    proposalSafeTitle: "このメニューは安心してお召し上がりいただけます！",
+    proposalWarningDesc: "以下の2つの選択肢から選ぶことができます。",
+    proposalSafeDesc: "楽しい日本での食事をお楽しみください。",
+    option1Badge: "選択肢 1",
+    option1Action: "を抜いて、この料理を食べる",
+    option1Desc:
+      "お店の方にお願いして、対象の食材を除いて調理してもらえるか確認します。",
+    option2Badge: "選択肢 2",
+    recommendedBadge: "おすすめ",
+    option2Action: "他の食べ物を見る（もう一度スキャン）",
+    option2Desc: "カメラ画面に戻り、別の料理やメニューを撮影して判定します。",
+
+    // 店員さんに見せる画面
+    staffCardTitle: "店員さんに見せる画面",
+    fullScreen: "大画面で表示",
+    staffPrompt: "店員さん、当てはまる方をタップしてください：",
+    yesButton: "はい (Yes)",
+    noButton: "できません (No)",
+    reactionYes: "🎉 ありがとうございます！安心してご注文いただけます。",
+    reactionNo: "承知しました。別の安全なメニューを探しましょう！",
+    scanOtherDish: "他の料理をスキャンする",
+    staffFullscreenBadge: "店員さんにお見せください",
+
+    // 設定画面
+    settingsHeader: "ハラール基準の設定",
+    settingsSub: "あなたの信仰や考え方に合わせて許容リスクを設定します",
+    item1Title: "アルコール成分が含まれるもの",
+    item1Desc: "酒粕、洋酒入りスイーツ、アルコール飲料など",
+    item2Title: "製造工程で、アルコールが生成される可能性のあるもの（醤油など）",
+    item2Desc: "醤油・味噌などの醸造発酵で自然発生する微量アルコール",
+    item3Title: "アルコール成分を加熱して飛ばしたもの",
+    item3Desc: "みりん、料理酒などを使った煮込みや焼き料理",
+    item4Title: "豚または豚由来の食材",
+    item4Desc: "豚肉、豚骨スープ、豚ゼラチン、ラードなど",
+    item5Title: "所定の処理がされていない豚肉以外の肉",
+    item5Desc: "イスラム法に基づきハラール処理されていない牛肉・鶏肉など",
+    radioAvoid: "避ける",
+    radioConditional: "場合によっては\n気にしない",
+    radioAllow: "気にしない",
+    saveSettings: "設定を保存",
+  },
+  EN: {
+    // 共通
+    langToggleText: "EN / JP",
+    homeNav: "Home",
+    scanNav: "Scan",
+    settingsNav: "Settings",
+    back: "Back",
+    savedToast: "Settings saved successfully",
+
+    // ホーム画面
+    appName: "TabeCan",
+    appTagline: "Expand your meal choices while traveling in Japan!",
+    criteriaTitle: "Your Halal Criteria",
+    editCriteria: "Edit",
+    porkTitle: "Pork & pork-derived ingredients",
+    nonHalalMeatTitle: "Non-Halal meat (Beef, Chicken, etc.)",
+    directAlcoholTitle: "Direct alcohol content",
+    cookedAlcoholTitle: "Cooked / Evaporated alcohol",
+    levelAvoid: "Avoid",
+    levelConditional: "Conditional",
+    levelAllow: "Allow",
+    aiDisclaimerTitle: "AI may make mistakes",
+    aiDisclaimerDesc: "Please use this as a reference when choosing food.",
+    scanCardSubtitle: "Just snap a photo!",
+    scanCardTitle: "Scan Food or Menu",
+    scanCardAction: "Launch Camera",
+    trySampleTitle: "Try sample dishes with one tap",
+    sampleNikujagaTitle: "🍲 Nikujaga",
+    sampleNikujagaDesc: "Pork & Mirin check test",
+    sampleRamenTitle: "🍜 Shoyu Ramen",
+    sampleRamenDesc: "Chashu & Broth check test",
+
+    // カメラ画面
+    cameraPreparing: "Preparing camera...",
+    cameraErrorPermission:
+      "Camera access was denied. Please allow camera in settings or choose a photo from album.",
+    cameraFallbackGuide:
+      "Could not launch camera. Please try selecting a photo from album or sample dishes below.",
+    restartCamera: "Restart Camera",
+    flashOn: "Flash on",
+    flashOff: "Flash off",
+    cameraGuide: "Position food or menu within the frame",
+    selectFromAlbum: "Select from Album",
+    trySample: "Try Sample",
+    takePhoto: "Take Photo",
+
+    // 解析中画面
+    analyzingTitle: "AI is analyzing your dish...",
+    analyzingDesc:
+      "Checking pork, alcohol, and seasoning against your personal dietary criteria.",
+
+    // 解析結果画面
+    resultHeader: "AI Analysis Result",
+    statusHighCaution: "High Caution",
+    statusCaution: "Caution",
+    statusSafe: "Safe",
+    statusDangerSummary: "May contain ingredients not suitable for your criteria",
+    statusWarningSummary: "Verification of seasonings or preparation is recommended",
+    statusSafeSummary: "Judged safe based on your selected criteria",
+    checkpointsHeader: "Ingredient Checkpoints",
+    nextToProposal: "Next: View meal suggestions & options",
+
+    // 提案画面
+    proposalHeader: "Suggestions for You",
+    proposalBadge: "Suggestion for You",
+    proposalWarningTitle: "This menu might be difficult to eat as-is",
+    proposalSafeTitle: "You can enjoy this dish with confidence!",
+    proposalWarningDesc: "You can choose from the two options below.",
+    proposalSafeDesc: "Have a wonderful dining experience in Japan.",
+    option1Badge: "Option 1",
+    option1Action: "Eat this dish without ",
+    option1Desc:
+      "Ask restaurant staff if they can prepare the dish without the target ingredients.",
+    option2Badge: "Option 2",
+    recommendedBadge: "Recommended",
+    option2Action: "Find other dishes (Scan again)",
+    option2Desc: "Return to camera and scan another dish or menu.",
+
+    // 店員さんに見せる画面
+    staffCardTitle: "Show this to restaurant staff",
+    fullScreen: "Full Screen",
+    staffPrompt: "Restaurant staff: please tap an answer:",
+    yesButton: "Yes (はい)",
+    noButton: "No (できません)",
+    reactionYes: "🎉 Thank you! You can order with confidence.",
+    reactionNo: "Understood. Let's find another safe menu option!",
+    scanOtherDish: "Scan another dish",
+    staffFullscreenBadge: "Please show this to staff",
+
+    // 設定画面
+    settingsHeader: "Halal Criteria Settings",
+    settingsSub: "Customize acceptable risk levels according to your faith and preference",
+    item1Title: "Products containing alcohol",
+    item1Desc: "Sake lees, Western liquor sweets, alcoholic beverages, etc.",
+    item2Title: "Naturally produced alcohol (Soy sauce, etc.)",
+    item2Desc: "Trace alcohol naturally produced in fermented seasonings like soy sauce or miso",
+    item3Title: "Alcohol evaporated through cooking",
+    item3Desc: "Simmered or grilled dishes using mirin, cooking sake, etc.",
+    item4Title: "Pork & pork-derived ingredients",
+    item4Desc: "Pork meat, tonkotsu broth, pork gelatin, lard, etc.",
+    item5Title: "Non-Halal slaughtered meat",
+    item5Desc: "Beef or chicken not slaughtered according to Islamic guidelines (Zabiha)",
+    radioAvoid: "Avoid",
+    radioConditional: "Conditional",
+    radioAllow: "Allow",
+    saveSettings: "Save Settings",
+  },
+};
+
 export default function HalalScanApp() {
   const [currentTab, setCurrentTab] = useState<ActiveTab>("home");
   const [lang, setLang] = useState<"JP" | "EN">("JP");
 
+  // 現在の言語リソース
+  const t = translations[lang];
+
+  // 言語切り替えトグル関数
+  const toggleLanguage = () => {
+    setLang((prev) => (prev === "JP" ? "EN" : "JP"));
+  };
+
   // =========================================================================
   // ユーザー設定状態（5項目：各 strict/conditional/allow）
   // =========================================================================
-  // 1. アルコール成分が含まれるもの
   const [alcoholDirect, setAlcoholDirect] = useState<ToleranceLevel>("strict");
-  // 2. 製造工程で、アルコールが生成される可能性のあるもの（醤油など）
   const [alcoholFermented, setAlcoholFermented] = useState<ToleranceLevel>("conditional");
-  // 3. アルコール成分を加熱して飛ばしたもの
   const [alcoholCooked, setAlcoholCooked] = useState<ToleranceLevel>("conditional");
-  // 4. 豚または豚由来の食材
   const [porkPolicy, setPorkPolicy] = useState<ToleranceLevel>("strict");
-  // 5. 所定の処理がされていない豚肉以外の肉
   const [nonHalalMeatPolicy, setNonHalalMeatPolicy] = useState<ToleranceLevel>("conditional");
 
   // 保存完了トースト表示
@@ -94,7 +317,7 @@ export default function HalalScanApp() {
 
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("お使いの端末またはブラウザはカメラ機能に対応していません。");
+        throw new Error("Device does not support camera API");
       }
 
       const constraints: MediaStreamConstraints = {
@@ -121,15 +344,15 @@ export default function HalalScanApp() {
     } catch (err: unknown) {
       console.warn("Camera start failed:", err);
       const errorMessage =
-        err instanceof Error ? err.message : "カメラの起動に失敗しました。";
+        err instanceof Error ? err.message : "Camera launch failed";
       setCameraError(
         errorMessage.includes("Permission") || errorMessage.includes("NotAllowed")
-          ? "カメラへのアクセスが拒否されました。設定でカメラを許可するか、下のアルバムから選択をお試しください。"
-          : "カメラを起動できませんでした。下の「アルバムから選択」または「サンプル料理」をお試しください。"
+          ? t.cameraErrorPermission
+          : t.cameraFallbackGuide
       );
       setIsCameraActive(false);
     }
-  }, [stopCamera]);
+  }, [stopCamera, t.cameraFallbackGuide, t.cameraErrorPermission]);
 
   // タブ変更時にカメラの起動・停止を制御
   useEffect(() => {
@@ -237,36 +460,48 @@ export default function HalalScanApp() {
       console.warn("Analysis fallback:", err);
       // フォールバック結果
       setAnalysisResult({
-        dish_name: "にくじゃが (Nikujaga)",
+        dish_name: lang === "JP" ? "にくじゃが (Nikujaga)" : "Nikujaga (Simmered Beef/Pork & Potato)",
         overall_status: porkPolicy === "strict" ? "danger" : "warning",
-        status_label: porkPolicy === "strict" ? "要注意" : "注意",
+        status_label: porkPolicy === "strict" ? t.statusHighCaution : t.statusCaution,
         summary_message:
-          "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。",
+          lang === "JP"
+            ? "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。"
+            : "Contains pork meat, and the broth likely contains cooked mirin and cooking sake.",
         checkpoints: [
           {
-            name: "豚または豚由来の食材",
+            name: t.porkTitle,
             level: porkPolicy === "strict" ? "danger" : "safe",
             level_label: porkPolicy === "strict" ? "要注意" : "安全",
             reason:
-              "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。",
+              lang === "JP"
+                ? "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。"
+                : "Sliced pork belly is used, and pork essence is extracted into the simmering broth.",
           },
           {
-            name: "アルコール成分を加熱して飛ばしたもの",
+            name: t.cookedAlcoholTitle,
             level: alcoholCooked === "strict" ? "warning" : "safe",
             level_label: alcoholCooked === "strict" ? "注意" : "安全",
             reason:
-              "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。",
+              lang === "JP"
+                ? "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。"
+                : "Most alcohol evaporates during cooking, but trace residues from seasoning may remain.",
           },
           {
-            name: "じゃがいも・人参・玉ねぎ",
+            name: lang === "JP" ? "じゃがいも・人参・玉ねぎ" : "Potatoes, Carrots, Onions",
             level: "safe",
             level_label: "安全",
-            reason: "100%植物性食材であり、ハラール上全く問題ありません。",
+            reason:
+              lang === "JP"
+                ? "100%植物性食材であり、ハラール上全く問題ありません。"
+                : "100% plant-based ingredients and completely halal.",
           },
         ],
-        concerning_ingredients: ["ぶた肉", "加熱みりん"],
+        concerning_ingredients: lang === "JP" ? ["ぶた肉", "加熱みりん"] : ["Pork", "Mirin"],
         proposal: {
-          remove_option_text: "ぶた肉を抜いてこの料理を食べますか？",
+          remove_option_text:
+            lang === "JP"
+              ? "ぶた肉を抜いてこの料理を食べますか？"
+              : "Eat this dish without pork?",
           staff_request_phrase:
             "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
         },
@@ -304,7 +539,6 @@ export default function HalalScanApp() {
               : "bg-rose-50/50 text-rose-700 border-rose-200/80 hover:bg-rose-100/60"
           }`}
         >
-          {/* ラジオボタン丸アイコン */}
           <div
             className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
               value === "strict" ? "border-white" : "border-rose-400"
@@ -312,7 +546,9 @@ export default function HalalScanApp() {
           >
             {value === "strict" && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
-          <span className="text-[11px] font-black tracking-tight leading-tight">避ける</span>
+          <span className="text-[11px] font-black tracking-tight leading-tight">
+            {t.radioAvoid}
+          </span>
         </button>
 
         {/* 2. 場合によっては気にしない (黄色基調) */}
@@ -325,7 +561,6 @@ export default function HalalScanApp() {
               : "bg-amber-50/50 text-amber-800 border-amber-200/80 hover:bg-amber-100/60"
           }`}
         >
-          {/* ラジオボタン丸アイコン */}
           <div
             className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
               value === "conditional" ? "border-white" : "border-amber-400"
@@ -333,10 +568,8 @@ export default function HalalScanApp() {
           >
             {value === "conditional" && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
-          <span className="text-[10px] font-black tracking-tight leading-tight">
-            場合によっては
-            <br />
-            気にしない
+          <span className="text-[10px] font-black tracking-tight leading-tight whitespace-pre-line">
+            {t.radioConditional}
           </span>
         </button>
 
@@ -350,7 +583,6 @@ export default function HalalScanApp() {
               : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
           }`}
         >
-          {/* ラジオボタン丸アイコン */}
           <div
             className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mb-1 transition-all ${
               value === "allow" ? "border-white" : "border-slate-400"
@@ -358,44 +590,56 @@ export default function HalalScanApp() {
           >
             {value === "allow" && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
-          <span className="text-[11px] font-black tracking-tight leading-tight">気にしない</span>
+          <span className="text-[11px] font-black tracking-tight leading-tight">
+            {t.radioAllow}
+          </span>
         </button>
       </div>
     );
   };
 
-  // 全画面店員見せモーダル
+  // レベル別ラベルヘルパー
+  const getLevelLabel = (level: ToleranceLevel) => {
+    if (level === "strict") return t.levelAvoid;
+    if (level === "conditional") return t.levelConditional;
+    return t.levelAllow;
+  };
+
+  // 全画面店員見せモーダル (バイリンガル表示)
   if (isFullscreenStaffView && analysisResult) {
+    const ingredientListText =
+      analysisResult.concerning_ingredients.join("・") ||
+      (lang === "JP" ? "該当の食材" : "these ingredients");
+
     return (
       <div className="fixed inset-0 z-50 bg-[#24C27A] text-white flex flex-col justify-between p-8 font-sans">
         <div className="flex justify-between items-center">
           <span className="px-4 py-1.5 rounded-full bg-white/20 text-xs font-black tracking-widest uppercase backdrop-blur-md">
-            店員さんにお見せください
+            {t.staffFullscreenBadge}
           </span>
           <button
             type="button"
             onClick={() => setIsFullscreenStaffView(false)}
-            className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30"
+            className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition-all"
+            aria-label="Close"
           >
             <Minimize2 className="w-6 h-6" />
           </button>
         </div>
 
+        {/* 店員さん向け日本語大文字 ＋ 訪日客向け英語 */}
         <div className="my-auto space-y-6 text-center">
           <p className="text-3xl font-black leading-snug tracking-tight">
-            「
-            {analysisResult.concerning_ingredients.join("・") || "該当の食材"}
-            を使わずに調理して頂くことは可能でしょうか？」
+            「{ingredientListText}を使わずに調理して頂くことは可能でしょうか？」
           </p>
           <p className="text-lg text-white/90 font-medium">
-            (Could you please prepare this dish without{" "}
-            {analysisResult.concerning_ingredients.join(", ") || "these ingredients"}?)
+            (Could you please prepare this dish without {ingredientListText}?)
           </p>
         </div>
 
         <div className="space-y-4">
           <p className="text-center text-xs text-white/80 font-bold">
-            店員さん、当てはまる方をタップしてください：
+            {t.staffPrompt}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -404,10 +648,10 @@ export default function HalalScanApp() {
                 setStaffResponse("yes");
                 setIsFullscreenStaffView(false);
               }}
-              className="py-5 rounded-3xl bg-white text-[#24C27A] font-black text-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="py-5 rounded-3xl bg-white text-[#24C27A] font-black text-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
               <Check className="w-6 h-6 stroke-[3]" />
-              <span>はい (Yes)</span>
+              <span>{t.yesButton}</span>
             </button>
             <button
               type="button"
@@ -415,9 +659,9 @@ export default function HalalScanApp() {
                 setStaffResponse("no");
                 setIsFullscreenStaffView(false);
               }}
-              className="py-5 rounded-3xl bg-white/20 text-white border-2 border-white font-black text-base shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="py-5 rounded-3xl bg-white/20 text-white border-2 border-white font-black text-base shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
-              <span>できません (No)</span>
+              <span>{t.noButton}</span>
             </button>
           </div>
         </div>
@@ -443,7 +687,7 @@ export default function HalalScanApp() {
         {showSavedToast && (
           <div className="absolute top-12 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900/90 text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 text-xs font-black backdrop-blur-md animate-bounce">
             <Check className="w-4 h-4 text-[#24C27A]" />
-            <span>設定を保存しました</span>
+            <span>{t.savedToast}</span>
           </div>
         )}
 
@@ -458,23 +702,20 @@ export default function HalalScanApp() {
                 <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-white shadow-sm">
                   <User className="w-5 h-5 text-white" />
                 </div>
+                {/* 言語切り替えボタン */}
                 <button
                   type="button"
-                  onClick={() => setLang(lang === "JP" ? "EN" : "JP")}
-                  className="px-3.5 py-1.5 rounded-full bg-white/25 backdrop-blur-md text-xs font-black flex items-center gap-1.5 hover:bg-white/35 transition-all border border-white/30 text-white shadow-xs"
+                  onClick={toggleLanguage}
+                  className="px-3.5 py-1.5 rounded-full bg-white/25 backdrop-blur-md text-xs font-black flex items-center gap-1.5 hover:bg-white/35 transition-all border border-white/30 text-white shadow-xs cursor-pointer"
                 >
                   <Globe className="w-3.5 h-3.5 text-white" />
-                  <span>{lang === "JP" ? "JP / EN" : "EN / JP"}</span>
+                  <span>{t.langToggleText}</span>
                 </button>
               </div>
 
               <div className="pt-1">
-                <h1 className="text-2xl font-black tracking-tight">TabeCan</h1>
-                <p className="text-xs text-white/90 mt-0.5 font-bold">
-                  {lang === "JP"
-                    ? "日本旅行中の食事レパートリーを増やそう！"
-                    : "Expand your meal options while traveling in Japan!"}
-                </p>
+                <h1 className="text-2xl font-black tracking-tight">{t.appName}</h1>
+                <p className="text-xs text-white/90 mt-0.5 font-bold">{t.appTagline}</p>
               </div>
             </div>
 
@@ -483,15 +724,13 @@ export default function HalalScanApp() {
               {/* あなたのハラール基準サマリーカード */}
               <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-slate-800">
-                    {lang === "JP" ? "現在のハラール基準" : "Your Halal Criteria"}
-                  </span>
+                  <span className="text-xs font-black text-slate-800">{t.criteriaTitle}</span>
                   <button
                     type="button"
                     onClick={() => setCurrentTab("setting")}
-                    className="text-xs font-bold text-[#24C27A] flex items-center gap-0.5 hover:underline"
+                    className="text-xs font-bold text-[#24C27A] flex items-center gap-0.5 hover:underline cursor-pointer"
                   >
-                    <span>{lang === "JP" ? "変更する" : "Edit"}</span>
+                    <span>{t.editCriteria}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -500,7 +739,7 @@ export default function HalalScanApp() {
                 <div className="space-y-2 pt-1 text-xs">
                   {/* 豚肉 */}
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
-                    <span className="font-bold text-slate-700">豚または豚由来の食材</span>
+                    <span className="font-bold text-slate-700">{t.porkTitle}</span>
                     <span
                       className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
                         porkPolicy === "strict"
@@ -510,17 +749,13 @@ export default function HalalScanApp() {
                           : "bg-slate-200 text-slate-600"
                       }`}
                     >
-                      {porkPolicy === "strict"
-                        ? "避ける"
-                        : porkPolicy === "conditional"
-                        ? "場合により可"
-                        : "気にしない"}
+                      {getLevelLabel(porkPolicy)}
                     </span>
                   </div>
 
                   {/* 非認証肉 */}
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
-                    <span className="font-bold text-slate-700">未処理の豚以外の肉</span>
+                    <span className="font-bold text-slate-700">{t.nonHalalMeatTitle}</span>
                     <span
                       className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
                         nonHalalMeatPolicy === "strict"
@@ -530,17 +765,13 @@ export default function HalalScanApp() {
                           : "bg-slate-200 text-slate-600"
                       }`}
                     >
-                      {nonHalalMeatPolicy === "strict"
-                        ? "避ける"
-                        : nonHalalMeatPolicy === "conditional"
-                        ? "場合により可"
-                        : "気にしない"}
+                      {getLevelLabel(nonHalalMeatPolicy)}
                     </span>
                   </div>
 
                   {/* 直接アルコール */}
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
-                    <span className="font-bold text-slate-700">アルコール直接含有</span>
+                    <span className="font-bold text-slate-700">{t.directAlcoholTitle}</span>
                     <span
                       className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
                         alcoholDirect === "strict"
@@ -550,17 +781,13 @@ export default function HalalScanApp() {
                           : "bg-slate-200 text-slate-600"
                       }`}
                     >
-                      {alcoholDirect === "strict"
-                        ? "避ける"
-                        : alcoholDirect === "conditional"
-                        ? "場合により可"
-                        : "気にしない"}
+                      {getLevelLabel(alcoholDirect)}
                     </span>
                   </div>
 
                   {/* 加熱みりん */}
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
-                    <span className="font-bold text-slate-700">加熱揮発アルコール</span>
+                    <span className="font-bold text-slate-700">{t.cookedAlcoholTitle}</span>
                     <span
                       className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
                         alcoholCooked === "strict"
@@ -570,11 +797,7 @@ export default function HalalScanApp() {
                           : "bg-slate-200 text-slate-600"
                       }`}
                     >
-                      {alcoholCooked === "strict"
-                        ? "避ける"
-                        : alcoholCooked === "conditional"
-                        ? "場合により可"
-                        : "気にしない"}
+                      {getLevelLabel(alcoholCooked)}
                     </span>
                   </div>
                 </div>
@@ -585,14 +808,10 @@ export default function HalalScanApp() {
                 <div className="space-y-1 max-w-[220px]">
                   <p className="text-xs font-black text-slate-800 leading-snug flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>
-                      {lang === "JP" ? "AIは間違えることがあります" : "AI may make mistakes"}
-                    </span>
+                    <span>{t.aiDisclaimerTitle}</span>
                   </p>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    {lang === "JP"
-                      ? "食べ物を選ぶ際の参考にしてください"
-                      : "Please use this as a reference when choosing food."}
+                    {t.aiDisclaimerDesc}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-[#24C27A] shadow-inner shrink-0">
@@ -606,14 +825,10 @@ export default function HalalScanApp() {
                 className="bg-gradient-to-br from-[#24C27A] to-[#1EA866] rounded-3xl p-6 text-white shadow-md cursor-pointer hover:shadow-lg transition-all active:scale-98 flex items-center justify-between group"
               >
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-white/80">
-                    {lang === "JP" ? "写真を撮るだけ！" : "Just snap a photo!"}
-                  </p>
-                  <h3 className="text-base font-black">
-                    {lang === "JP" ? "料理・メニューをスキャン" : "Scan Food or Menu"}
-                  </h3>
+                  <p className="text-xs font-bold text-white/80">{t.scanCardSubtitle}</p>
+                  <h3 className="text-base font-black">{t.scanCardTitle}</h3>
                   <p className="text-[11px] text-white/90 font-medium pt-1 flex items-center gap-1">
-                    <span>{lang === "JP" ? "カメラを起動する" : "Launch Camera"}</span>
+                    <span>{t.scanCardAction}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </p>
                 </div>
@@ -627,24 +842,24 @@ export default function HalalScanApp() {
               <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100 space-y-2.5">
                 <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
                   <Sparkles className="w-3.5 h-3.5 text-[#24C27A]" />
-                  <span>{lang === "JP" ? "ワンタップでAI判定を試す" : "Try sample dishes"}</span>
+                  <span>{t.trySampleTitle}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleSampleRun("nikujaga")}
-                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100"
+                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100 cursor-pointer"
                   >
-                    <p className="text-xs font-black text-slate-800">🍲 にくじゃが</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">豚肉・みりん判定テスト</p>
+                    <p className="text-xs font-black text-slate-800">{t.sampleNikujagaTitle}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t.sampleNikujagaDesc}</p>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSampleRun("ramen")}
-                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100"
+                    className="p-3 rounded-2xl bg-slate-50 hover:bg-[#E8F8F0] hover:text-[#24C27A] text-left transition-all border border-slate-100 cursor-pointer"
                   >
-                    <p className="text-xs font-black text-slate-800">🍜 醤油ラーメン</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">チャーシュー・出汁テスト</p>
+                    <p className="text-xs font-black text-slate-800">{t.sampleRamenTitle}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{t.sampleRamenDesc}</p>
                   </button>
                 </div>
               </div>
@@ -653,7 +868,7 @@ export default function HalalScanApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* 画面2: 本格カメラ画面 (Live Video & DoritosスキャンUI)                    */}
+        {/* 画面2: 本格カメラ画面 (Live Video & スキャンUI)                           */}
         {/* ========================================================================= */}
         {currentTab === "camera" && (
           <div className="flex-1 flex flex-col justify-between bg-black relative text-white overflow-hidden">
@@ -676,54 +891,61 @@ export default function HalalScanApp() {
                     <Camera className="w-8 h-8" />
                   </div>
                   <div className="space-y-2 max-w-[280px]">
-                    <p className="text-sm font-bold text-white">カメラを準備中...</p>
-                    {cameraError ? (
-                      <p className="text-xs text-amber-300 leading-relaxed">{cameraError}</p>
-                    ) : (
-                      <p className="text-xs text-white/70">
-                        カメラが起動しない場合は、アルバムから写真を選択するか、サンプルをお試しください。
-                      </p>
-                    )}
+                    <p className="text-sm font-bold text-white">{t.cameraPreparing}</p>
+                    <p className="text-xs text-amber-300 leading-relaxed">
+                      {cameraError || t.cameraFallbackGuide}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={startCamera}
-                    className="px-4 py-2 rounded-full bg-[#24C27A] text-white text-xs font-bold hover:bg-[#1EA866] transition-all"
+                    className="px-4 py-2 rounded-full bg-[#24C27A] text-white text-xs font-bold hover:bg-[#1EA866] transition-all cursor-pointer"
                   >
-                    カメラを再起動
+                    {t.restartCamera}
                   </button>
                 </div>
               )}
             </div>
 
-            {/* 上部ヘッダーバー: 戻る & フラッシュ */}
+            {/* 上部ヘッダーバー: 戻る & 言語切替 & フラッシュ */}
             <div className="relative z-20 pt-10 px-6 flex justify-between items-center">
               <button
                 type="button"
                 onClick={() => setCurrentTab("home")}
-                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all border border-white/20"
-                aria-label="戻る"
+                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all border border-white/20 cursor-pointer"
+                aria-label={t.back}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
 
-              <button
-                type="button"
-                onClick={() => setFlashOn(!flashOn)}
-                className="px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-black/60 transition-all border border-white/20 text-white"
-              >
-                {flashOn ? (
-                  <>
-                    <Zap className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Flash on</span>
-                  </>
-                ) : (
-                  <>
-                    <ZapOff className="w-3.5 h-3.5 text-white/80" />
-                    <span>Flash off</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-black flex items-center gap-1 hover:bg-black/60 transition-all border border-white/20 text-white cursor-pointer"
+                >
+                  <Globe className="w-3.5 h-3.5 text-white" />
+                  <span>{lang}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setFlashOn(!flashOn)}
+                  className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-black/60 transition-all border border-white/20 text-white cursor-pointer"
+                >
+                  {flashOn ? (
+                    <>
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      <span>{t.flashOn}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ZapOff className="w-3.5 h-3.5 text-white/80" />
+                      <span>{t.flashOff}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* 中央: スキャニング四隅枠 & ネオングリーン光線 */}
@@ -735,8 +957,8 @@ export default function HalalScanApp() {
                 <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-2xl shadow-sm" />
                 <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#24C27A] to-transparent shadow-[0_0_15px_#24C27A] animate-pulse" />
               </div>
-              <p className="text-[11px] text-white/80 font-bold mt-4 drop-shadow-md">
-                料理やメニュー全体を枠内に収めてください
+              <p className="text-[11px] text-white/80 font-bold mt-4 drop-shadow-md text-center">
+                {t.cameraGuide}
               </p>
             </div>
 
@@ -745,8 +967,8 @@ export default function HalalScanApp() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95"
-                title="アルバムから選択"
+                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95 cursor-pointer"
+                title={t.selectFromAlbum}
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
@@ -754,8 +976,8 @@ export default function HalalScanApp() {
               <button
                 type="button"
                 onClick={capturePhoto}
-                className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center p-1 group active:scale-90 transition-all shadow-xl"
-                aria-label="写真を撮影"
+                className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center p-1 group active:scale-90 transition-all shadow-xl cursor-pointer"
+                aria-label={t.takePhoto}
               >
                 <div className="w-full h-full rounded-full bg-[#24C27A] group-hover:bg-[#1EA866] transition-all flex items-center justify-center">
                   <Camera className="w-7 h-7 text-white stroke-[2.2]" />
@@ -765,8 +987,8 @@ export default function HalalScanApp() {
               <button
                 type="button"
                 onClick={() => handleSampleRun("nikujaga")}
-                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95"
-                title="サンプル料理で試す"
+                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95 cursor-pointer"
+                title={t.trySample}
               >
                 <Sparkles className="w-5 h-5 text-amber-300" />
               </button>
@@ -793,9 +1015,9 @@ export default function HalalScanApp() {
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-xl font-black tracking-tight">AIが料理を分析中...</h2>
+                <h2 className="text-xl font-black tracking-tight">{t.analyzingTitle}</h2>
                 <p className="text-xs text-white/80 font-medium max-w-[260px] leading-relaxed">
-                  豚肉・アルコール・調味料などを照合し、あなたの信仰基準に合致するか判定しています。
+                  {t.analyzingDesc}
                 </p>
               </div>
 
@@ -816,12 +1038,20 @@ export default function HalalScanApp() {
                 <button
                   type="button"
                   onClick={() => setCurrentTab("camera")}
-                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100"
+                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
-                <h2 className="text-sm font-black text-slate-900">AI解析結果</h2>
-                <div className="w-9" />
+                <h2 className="text-sm font-black text-slate-900">{t.resultHeader}</h2>
+                {/* 言語切替ボタン */}
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  className="px-2.5 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Globe className="w-3 h-3 text-[#24C27A]" />
+                  <span>{lang}</span>
+                </button>
               </div>
 
               {/* 料理写真サムネイル & 料理名 */}
@@ -853,10 +1083,11 @@ export default function HalalScanApp() {
                     </div>
                     <div>
                       <p className="text-xs font-black uppercase tracking-wider text-rose-500">
-                        判定: {analysisResult.status_label}
+                        {lang === "JP" ? "判定: " : "Status: "}
+                        {t.statusHighCaution}
                       </p>
                       <p className="text-xs font-bold leading-tight mt-0.5 text-rose-800">
-                        基準に合わない食材が含まれている可能性があります
+                        {t.statusDangerSummary}
                       </p>
                     </div>
                   </div>
@@ -869,10 +1100,11 @@ export default function HalalScanApp() {
                     </div>
                     <div>
                       <p className="text-xs font-black uppercase tracking-wider text-amber-600">
-                        判定: {analysisResult.status_label}
+                        {lang === "JP" ? "判定: " : "Status: "}
+                        {t.statusCaution}
                       </p>
                       <p className="text-xs font-bold leading-tight mt-0.5 text-amber-900">
-                        調味料や製法などの確認が推奨されます
+                        {t.statusWarningSummary}
                       </p>
                     </div>
                   </div>
@@ -885,10 +1117,11 @@ export default function HalalScanApp() {
                     </div>
                     <div>
                       <p className="text-xs font-black uppercase tracking-wider text-emerald-600">
-                        判定: {analysisResult.status_label}
+                        {lang === "JP" ? "判定: " : "Status: "}
+                        {t.statusSafe}
                       </p>
                       <p className="text-xs font-bold leading-tight mt-0.5 text-emerald-900">
-                        設定基準に照らし合わせて安全と判断されました
+                        {t.statusSafeSummary}
                       </p>
                     </div>
                   </div>
@@ -898,7 +1131,7 @@ export default function HalalScanApp() {
               {/* チェックポイント（理由付き詳細） */}
               <div className="space-y-2.5">
                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                  成分チェックポイント ({analysisResult.checkpoints.length}項目)
+                  {t.checkpointsHeader} ({analysisResult.checkpoints.length})
                 </h3>
                 <div className="space-y-2">
                   {analysisResult.checkpoints.map((cp, idx) => (
@@ -917,7 +1150,11 @@ export default function HalalScanApp() {
                               : "bg-emerald-100 text-emerald-700"
                           }`}
                         >
-                          {cp.level_label}
+                          {cp.level === "danger"
+                            ? t.statusHighCaution
+                            : cp.level === "warning"
+                            ? t.statusCaution
+                            : t.statusSafe}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -933,9 +1170,9 @@ export default function HalalScanApp() {
                 <button
                   type="button"
                   onClick={() => setCurrentTab("proposal")}
-                  className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-sm shadow-md hover:bg-[#1EA866] transition-all flex items-center justify-center gap-2 active:scale-98"
+                  className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-sm shadow-md hover:bg-[#1EA866] transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
                 >
-                  <span>次へ: 食事の提案・選択肢を見る</span>
+                  <span>{t.nextToProposal}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -953,28 +1190,35 @@ export default function HalalScanApp() {
                 <button
                   type="button"
                   onClick={() => setCurrentTab("result")}
-                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100"
+                  className="w-9 h-9 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
-                <h2 className="text-sm font-black text-slate-900">あなたへのご提案</h2>
-                <div className="w-9" />
+                <h2 className="text-sm font-black text-slate-900">{t.proposalHeader}</h2>
+                <button
+                  type="button"
+                  onClick={toggleLanguage}
+                  className="px-2.5 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                >
+                  <Globe className="w-3 h-3 text-[#24C27A]" />
+                  <span>{lang}</span>
+                </button>
               </div>
 
               {/* 案内メッセージカード */}
               <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-2 text-center">
                 <span className="text-[10px] font-black uppercase tracking-wider text-[#24C27A] bg-[#E8F8F0] px-3 py-1 rounded-full">
-                  Suggestion for You
+                  {t.proposalBadge}
                 </span>
                 <h1 className="text-base font-black text-slate-900 pt-1">
                   {analysisResult.concerning_ingredients.length > 0
-                    ? `このメニューはそのままでは難しい可能性があります`
-                    : `このメニューは安心してお召し上がりいただけます！`}
+                    ? t.proposalWarningTitle
+                    : t.proposalSafeTitle}
                 </h1>
                 <p className="text-xs text-slate-500 font-medium">
                   {analysisResult.concerning_ingredients.length > 0
-                    ? `以下の2つの選択肢から選ぶことができます。`
-                    : `楽しい日本での食事をお楽しみください。`}
+                    ? t.proposalWarningDesc
+                    : t.proposalSafeDesc}
                 </p>
               </div>
 
@@ -996,14 +1240,14 @@ export default function HalalScanApp() {
                       </div>
                       <div className="flex-1">
                         <span className="text-[10px] font-black uppercase text-[#24C27A] tracking-wider">
-                          選択肢 1
+                          {t.option1Badge}
                         </span>
                         <h3 className="text-sm font-black text-slate-900 leading-snug">
-                          {analysisResult.concerning_ingredients.join("・")}を抜いて、この料理を食べる
+                          {lang === "JP"
+                            ? `${analysisResult.concerning_ingredients.join("・")}${t.option1Action}`
+                            : `${t.option1Action}${analysisResult.concerning_ingredients.join(", ")}`}
                         </h3>
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          お店の方にお願いして、対象の食材を除いて調理してもらえるか確認します。
-                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">{t.option1Desc}</p>
                       </div>
                     </div>
                   </div>
@@ -1020,14 +1264,14 @@ export default function HalalScanApp() {
                     </div>
                     <div className="flex-1">
                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                        {analysisResult.concerning_ingredients.length > 0 ? "選択肢 2" : "おすすめ"}
+                        {analysisResult.concerning_ingredients.length > 0
+                          ? t.option2Badge
+                          : t.recommendedBadge}
                       </span>
                       <h3 className="text-sm font-black text-slate-900 leading-snug">
-                        他の食べ物を見る（もう一度スキャン）
+                        {t.option2Action}
                       </h3>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        カメラ画面に戻り、別の料理やメニューを撮影して判定します。
-                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">{t.option2Desc}</p>
                     </div>
                   </div>
                 </div>
@@ -1038,23 +1282,21 @@ export default function HalalScanApp() {
                 <div className="border-2 border-[#24C27A] bg-white rounded-3xl p-5 space-y-4 shadow-md animate-fadeIn">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[10px] font-black uppercase tracking-wider text-[#24C27A] bg-[#E8F8F0] px-2.5 py-1 rounded-full">
-                      店員さんに見せる画面
+                      {t.staffCardTitle}
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsFullscreenStaffView(true)}
-                      className="text-xs font-bold text-[#24C27A] flex items-center gap-1 hover:underline"
+                      className="text-xs font-bold text-[#24C27A] flex items-center gap-1 hover:underline cursor-pointer"
                     >
                       <Maximize2 className="w-3.5 h-3.5" />
-                      <span>大画面で表示</span>
+                      <span>{t.fullScreen}</span>
                     </button>
                   </div>
 
                   <div className="space-y-1 text-center py-1">
                     <p className="text-base font-black text-slate-900 leading-snug">
-                      「
-                      {analysisResult.concerning_ingredients.join("・")}
-                      を使わずに調理して頂くことは可能でしょうか？」
+                      「{analysisResult.concerning_ingredients.join("・")}を使わずに調理して頂くことは可能でしょうか？」
                     </p>
                     <p className="text-[11px] text-slate-500">
                       (Could you please prepare this dish without{" "}
@@ -1064,49 +1306,49 @@ export default function HalalScanApp() {
 
                   <div className="space-y-2 pt-1 border-t border-slate-100">
                     <p className="text-center text-[10px] font-bold text-slate-400">
-                      店員さん、当てはまる方をタップしてください：
+                      {t.staffPrompt}
                     </p>
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => setStaffResponse("yes")}
-                        className={`py-3 rounded-full font-black text-xs text-white shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1 ${
+                        className={`py-3 rounded-full font-black text-xs text-white shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1 cursor-pointer ${
                           staffResponse === "yes"
                             ? "bg-[#24C27A] ring-4 ring-emerald-200"
                             : "bg-[#24C27A] hover:bg-[#1EA866]"
                         }`}
                       >
                         <Check className="w-4 h-4" />
-                        <span>はい (Yes)</span>
+                        <span>{t.yesButton}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setStaffResponse("no")}
-                        className={`py-3 rounded-full font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 ${
+                        className={`py-3 rounded-full font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 cursor-pointer ${
                           staffResponse === "no"
                             ? "ring-4 ring-rose-200 bg-rose-50 text-rose-700"
                             : ""
                         }`}
                       >
-                        できません (No)
+                        {t.noButton}
                       </button>
                     </div>
 
                     {staffResponse === "yes" && (
                       <div className="p-3 bg-[#E8F8F0] rounded-2xl text-center text-xs font-black text-[#24C27A] border border-[#24C27A] shadow-xs mt-2">
-                        🎉 ありがとうございます！安心してご注文いただけます。
+                        {t.reactionYes}
                       </div>
                     )}
                     {staffResponse === "no" && (
                       <div className="p-3 bg-rose-50 rounded-2xl text-center text-xs font-black text-rose-600 border border-rose-300 shadow-xs mt-2 space-y-2">
-                        <p>承知しました。別の安全なメニューを探しましょう！</p>
+                        <p>{t.reactionNo}</p>
                         <button
                           type="button"
                           onClick={() => setCurrentTab("camera")}
-                          className="px-4 py-1.5 rounded-full bg-rose-600 text-white text-[11px] font-bold"
+                          className="px-4 py-1.5 rounded-full bg-rose-600 text-white text-[11px] font-bold cursor-pointer"
                         >
-                          他の料理をスキャンする
+                          {t.scanOtherDish}
                         </button>
                       </div>
                     )}
@@ -1124,20 +1366,30 @@ export default function HalalScanApp() {
           <div className="flex-1 flex flex-col justify-between p-5 bg-[#F8FAF9] overflow-y-auto">
             <div className="space-y-4">
               {/* ヘッダー */}
-              <div className="flex items-center gap-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTab("home")}
+                    className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <div>
+                    <h1 className="text-lg font-black text-slate-900">{t.settingsHeader}</h1>
+                    <p className="text-[11px] text-slate-500 font-medium">{t.settingsSub}</p>
+                  </div>
+                </div>
+
+                {/* 言語切替 */}
                 <button
                   type="button"
-                  onClick={() => setCurrentTab("home")}
-                  className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all"
+                  onClick={toggleLanguage}
+                  className="px-2.5 py-1 rounded-full bg-white text-xs font-bold text-slate-700 shadow-xs border border-slate-200 hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer shrink-0"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  <Globe className="w-3.5 h-3.5 text-[#24C27A]" />
+                  <span>{lang}</span>
                 </button>
-                <div>
-                  <h1 className="text-lg font-black text-slate-900">ハラール基準の設定</h1>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    あなたの信仰や考え方に合わせて許容リスクを設定します
-                  </p>
-                </div>
               </div>
 
               {/* 設定カードリスト */}
@@ -1149,12 +1401,8 @@ export default function HalalScanApp() {
                       <Wine className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black text-slate-800">
-                        アルコール成分が含まれるもの
-                      </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        酒粕、洋酒入りスイーツ、アルコール飲料など
-                      </p>
+                      <h3 className="text-xs font-black text-slate-800">{t.item1Title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{t.item1Desc}</p>
                     </div>
                   </div>
                   <RadioOptionGroup value={alcoholDirect} onChange={setAlcoholDirect} />
@@ -1167,12 +1415,8 @@ export default function HalalScanApp() {
                       <FlaskConical className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black text-slate-800">
-                        製造工程で、アルコールが生成される可能性のあるもの（醤油など）
-                      </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        醤油・味噌などの醸造発酵で自然発生する微量アルコール
-                      </p>
+                      <h3 className="text-xs font-black text-slate-800">{t.item2Title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{t.item2Desc}</p>
                     </div>
                   </div>
                   <RadioOptionGroup value={alcoholFermented} onChange={setAlcoholFermented} />
@@ -1185,12 +1429,8 @@ export default function HalalScanApp() {
                       <Flame className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black text-slate-800">
-                        アルコール成分を加熱して飛ばしたもの
-                      </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        みりん、料理酒などを使った煮込みや焼き料理
-                      </p>
+                      <h3 className="text-xs font-black text-slate-800">{t.item3Title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{t.item3Desc}</p>
                     </div>
                   </div>
                   <RadioOptionGroup value={alcoholCooked} onChange={setAlcoholCooked} />
@@ -1203,12 +1443,8 @@ export default function HalalScanApp() {
                       <ShieldAlert className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black text-slate-800">
-                        豚または豚由来の食材
-                      </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        豚肉、豚骨スープ、豚ゼラチン、ラードなど
-                      </p>
+                      <h3 className="text-xs font-black text-slate-800">{t.item4Title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{t.item4Desc}</p>
                     </div>
                   </div>
                   <RadioOptionGroup value={porkPolicy} onChange={setPorkPolicy} />
@@ -1221,12 +1457,8 @@ export default function HalalScanApp() {
                       <Beef className="w-4 h-4" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black text-slate-800">
-                        所定の処理がされていない豚肉以外の肉
-                      </h3>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        イスラム法に基づきハラール処理されていない牛肉・鶏肉など
-                      </p>
+                      <h3 className="text-xs font-black text-slate-800">{t.item5Title}</h3>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{t.item5Desc}</p>
                     </div>
                   </div>
                   <RadioOptionGroup value={nonHalalMeatPolicy} onChange={setNonHalalMeatPolicy} />
@@ -1239,10 +1471,10 @@ export default function HalalScanApp() {
               <button
                 type="button"
                 onClick={handleSaveSettings}
-                className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-sm shadow-md hover:bg-[#1EA866] transition-all flex items-center justify-center gap-2 active:scale-98"
+                className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-sm shadow-md hover:bg-[#1EA866] transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
               >
                 <Save className="w-4 h-4" />
-                <span>設定を保存</span>
+                <span>{t.saveSettings}</span>
               </button>
             </div>
           </div>
@@ -1256,12 +1488,12 @@ export default function HalalScanApp() {
           <button
             type="button"
             onClick={() => setCurrentTab("home")}
-            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all ${
+            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer ${
               currentTab === "home"
                 ? "text-[#24C27A] scale-110"
                 : "text-slate-400 hover:text-slate-600"
             }`}
-            aria-label="Home"
+            aria-label={t.homeNav}
           >
             <Home className="w-6 h-6 stroke-[2.2]" />
             {currentTab === "home" && (
@@ -1273,8 +1505,8 @@ export default function HalalScanApp() {
           <button
             type="button"
             onClick={() => setCurrentTab("camera")}
-            className="flex flex-col items-center -mt-7 group active:scale-95 transition-all"
-            aria-label="Camera Scan"
+            className="flex flex-col items-center -mt-7 group active:scale-95 transition-all cursor-pointer"
+            aria-label={t.scanNav}
           >
             <div className="w-14 h-14 rounded-full bg-[#24C27A] text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 border-4 border-white group-hover:scale-105 transition-all">
               <Scan className="w-6 h-6 stroke-[2.5]" />
@@ -1285,12 +1517,12 @@ export default function HalalScanApp() {
           <button
             type="button"
             onClick={() => setCurrentTab("setting")}
-            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all ${
+            className={`p-2 rounded-2xl flex flex-col items-center justify-center transition-all cursor-pointer ${
               currentTab === "setting"
                 ? "text-[#24C27A] scale-110"
                 : "text-slate-400 hover:text-slate-600"
             }`}
-            aria-label="Settings"
+            aria-label={t.settingsNav}
           >
             <Settings className="w-6 h-6 stroke-[2.2]" />
             {currentTab === "setting" && (
