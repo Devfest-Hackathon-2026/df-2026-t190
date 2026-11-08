@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { AnalyzeResponse, UserPreferences, DEFAULT_USER_PREFERENCES } from "@/types";
+import { UserPreferences, DEFAULT_USER_PREFERENCES } from "@/types";
+
+export interface EnhancedAnalyzeResult {
+  dish_name: string;
+  overall_status: "safe" | "warning" | "danger"; // 安全 | 注意 | 要注意
+  status_label: string; // 「安全」「注意」「要注意」
+  summary_message: string;
+  checkpoints: {
+    name: string;
+    level: "safe" | "warning" | "danger";
+    level_label: "安全" | "注意" | "要注意";
+    reason: string;
+  }[];
+  concerning_ingredients: string[]; // 注意・要注意となった食材リスト (例: ["豚肉", "みりん"])
+  proposal: {
+    remove_option_text: string; // 例: "豚肉を抜いてこの料理を食べますか？"
+    staff_request_phrase: string; // 例: "すみません、豚肉を使わずに調理して頂くことは可能でしょうか？"
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,62 +32,52 @@ export async function POST(req: NextRequest) {
     const prefs = user_preferences || DEFAULT_USER_PREFERENCES;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // APIキーがない、または画像がない場合のフォールバック（高品質なモック判定）
-    if (!apiKey || !image_data) {
-      return NextResponse.json(getMockAnalyzeResponse(prefs, custom_prompt));
+    // APIキーがない、または画像が指定されていない場合のフォールバック（高品質モック）
+    if (!apiKey || !image_data || image_data === "demo") {
+      return NextResponse.json(getMockResult(prefs));
     }
 
     try {
       const ai = new GoogleGenAI({ apiKey });
       const prompt = `
-あなたは日本の飲食店や食品のハラール性を判定する専門家AIです。
-ユーザーから提供された料理/メニューの写真と、ユーザーの個別ハラール基準を基に、以下のJSONフォーマットのみを出力してください。
-Markdownコードブロックは不要です。純粋なJSON文字列のみを返してください。
+あなたは日本の飲食店・食品のハラール成分を判定する専門家AIです。
+提供された料理/メニューの画像を分析し、ユーザーのハラール基準に照らし合わせて以下のJSONのみを出力してください。
+Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返してください。
 
 【ユーザーのハラール基準】
-- 直接アルコール含有食品: ${prefs.alcohol_rules.direct_alcohol}
-- 発酵由来・残存0%（醤油等）: ${prefs.alcohol_rules.fermented_zero}
-- 加熱揮発アルコール（みりん等）: ${prefs.alcohol_rules.cooked_evaporated}
-- 豚肉・豚骨・豚エキス: ${prefs.pork_level}
-- ゼラチン・動物性油脂: ${prefs.gelatin_level}
-- 補足希望: ${prefs.custom_notes || "特になし"}
-- ユーザー補足入力: ${custom_prompt || "特になし"}
+- 直接アルコール含有食品: ${prefs.alcohol_rules?.direct_alcohol || "strict"}
+- 発酵調味料（醤油・味噌など）: ${prefs.alcohol_rules?.fermented_zero || "strict"}
+- 加熱揮発アルコール（みりん・料理酒など）: ${prefs.alcohol_rules?.cooked_evaporated || "strict"}
+- 豚肉・豚骨・豚由来エキス: ${prefs.pork_level || "strict"}
 
-【出力JSONフォーマット】
+【判定基準のルール】
+- 総合判定(overall_status):
+  - ユーザー基準に違反する禁止成分（豚肉など）が含まれる場合は「danger」（要注意）
+  - 微量発酵や加熱みりんなど確認・注意を要する場合は「warning」（注意）
+  - 問題ない、または安全な食材のみの場合は「safe」（安全）
+
+【必須JSONフォーマット】
 {
+  "dish_name": "料理名（例: にくじゃが、醤油ラーメン、野菜サラダ）",
   "overall_status": "safe" | "warning" | "danger",
-  "summary_message": "日本語の短い判定サマリー（例: 豚由来エキスとみりん加熱の可能性があります）",
+  "status_label": "安全" | "注意" | "要注意",
+  "summary_message": "判定の理由の要約（日本語1〜2行）",
   "checkpoints": [
     {
-      "category": "alcohol" | "pork" | "gelatin" | "other",
-      "title": "成分・調理法の名称",
-      "detail": "具体的な根拠の説明",
-      "risk_level": "safe" | "warning" | "danger"
+      "name": "食材・調味料名（例: 豚肉、みりん、醤油、野菜など）",
+      "level": "safe" | "warning" | "danger",
+      "level_label": "安全" | "注意" | "要注意",
+      "reason": "なぜその判定になったのか具体的な理由（日本語）"
     }
   ],
-  "ai_proposals": [
-    {
-      "proposal_text": "〇〇を××に変更して食べますか？",
-      "target_item": "変更対象",
-      "replacement": "代替案"
-    }
-  ],
-  "staff_communication_cards": [
-    {
-      "card_type": "replacement_request",
-      "title": "変更のお願い",
-      "message": "店員さんに見せる丁寧な日本語のお願い文"
-    },
-    {
-      "card_type": "menu_inquiry",
-      "title": "おすすめの確認",
-      "message": "店員さんにこの店で食べられるメニューを尋ねる丁寧な日本語文"
-    }
-  ]
+  "concerning_ingredients": ["注意または要注意の食材リスト（例: 豚肉、みりん）。安全な場合は空配列 []"],
+  "proposal": {
+    "remove_option_text": "注意または要注意の食材がある場合は「〇〇を抜いてこの料理を食べますか？」、ない場合は「そのまま安心してお召し上がりいただけます」",
+    "staff_request_phrase": "注意または要注意の食材がある場合は「すみません、宗教上の理由により、〇〇を使わずに調理して頂くことは可能でしょうか？」、ない場合は「このまま注文可能です」"
+  }
 }
 `;
 
-      // Base64画像データの抽出
       let base64Data = image_data;
       let mimeType = "image/jpeg";
       if (image_data.startsWith("data:")) {
@@ -96,69 +104,49 @@ Markdownコードブロックは不要です。純粋なJSON文字列のみを�
       });
 
       const text = response.text || "";
-      const cleanedJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsedData: AnalyzeResponse = JSON.parse(cleanedJson);
-      return NextResponse.json(parsedData);
+      const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      const result: EnhancedAnalyzeResult = JSON.parse(cleaned);
+      return NextResponse.json(result);
     } catch (aiError) {
-      console.warn("Gemini generation fallback:", aiError);
-      return NextResponse.json(getMockAnalyzeResponse(prefs, custom_prompt));
+      console.warn("Gemini call fallback:", aiError);
+      return NextResponse.json(getMockResult(prefs));
     }
   } catch (error) {
-    console.error("API error:", error);
-    return NextResponse.json(
-      { error: "Failed to analyze image" },
-      { status: 500 }
-    );
+    console.error("API Error:", error);
+    return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
   }
 }
 
-function getMockAnalyzeResponse(prefs: UserPreferences, customPrompt?: string): AnalyzeResponse {
+function getMockResult(prefs: UserPreferences): EnhancedAnalyzeResult {
   return {
-    overall_status: "warning",
-    summary_message: "このメニューのハラール適合性は「要確認」です。スープのベースやタレに豚骨エキス・加熱みりんが使用されている可能性があります。",
+    dish_name: "にくじゃが (Nikujaga)",
+    overall_status: "danger",
+    status_label: "要注意",
+    summary_message: "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。",
     checkpoints: [
       {
-        category: "alcohol_cooked_evaporated",
-        title: "調理用アルコール（みりん・料理酒）",
-        detail: "タレの仕込みや調理に使用されていますが、加熱調理によりアルコール成分の大部分は揮発しています。",
-        risk_level: prefs.alcohol_rules.cooked_evaporated === "strict" ? "danger" : "warning",
+        name: "ぶた肉",
+        level: "danger",
+        level_label: "要注意",
+        reason: "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。",
       },
       {
-        category: "pork",
-        title: "豚由来成分（チャーシュー・豚骨エキス）",
-        detail: "具材に豚チャーシューが含まれており、スープ出汁に豚骨エキスがブレンドされている可能性があります。",
-        risk_level: prefs.pork_level === "strict" ? "danger" : "warning",
+        name: "加熱みりん・料理酒",
+        level: "warning",
+        level_label: "注意",
+        reason: "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。",
       },
       {
-        category: "fermented",
-        title: "発酵調味料（醤油・味噌）",
-        detail: "伝統的な発酵調味料ですが、醸造過程での微量アルコール残存の可能性があります。",
-        risk_level: prefs.alcohol_rules.fermented_zero === "allow" ? "safe" : "warning",
+        name: "じゃがいも・人参・玉ねぎ",
+        level: "safe",
+        level_label: "安全",
+        reason: "100%植物性食材であり、ハラール上全く問題ありません。",
       },
     ],
-    ai_proposals: [
-      {
-        proposal_text: "塩味のメニュー（魚介だしベース）に変更して注文しますか？",
-        target_item: "スープ",
-        replacement: "魚介塩スープ",
-      },
-      {
-        proposal_text: "チャーシューを【のり・煮卵・メンマ】に変更して注文しますか？",
-        target_item: "チャーシュー",
-        replacement: "のり・煮卵・メンマ",
-      },
-    ],
-    staff_communication_cards: [
-      {
-        card_type: "replacement_request",
-        title: "具材変更のお願い",
-        message: "すみません、私は宗教上の理由で豚肉を食べることができません。チャーシューを他の具材（のりや煮卵など）に変更していただくことは可能でしょうか？",
-      },
-      {
-        card_type: "menu_inquiry",
-        title: "食べられるメニューの確認",
-        message: "すみません、私は豚肉とアルコールを含む食事を避けています。このお店のメニューの中で、私が食べられそうな料理はありますでしょうか？（魚介だしや野菜中心など）",
-      },
-    ],
+    concerning_ingredients: ["ぶた肉", "加熱みりん"],
+    proposal: {
+      remove_option_text: "ぶた肉を抜いてこの料理を食べますか？",
+      staff_request_phrase: "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
+    },
   };
 }
