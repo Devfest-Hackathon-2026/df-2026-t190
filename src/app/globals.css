@@ -1,17 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --primary: #9BAD50;
-  --primary-hover: #8B9D40;
-  --primary-light: #F4F6EA;
-  --primary-border: #D8DFBA;
-  --background: #FAFAF7;
-  --foreground: #2C3518;
+  --app-bg: #DCE8D8;
+  --app-primary: #59724F;
+  --app-primary-hover: #4B6142;
+  --app-text: #222B1E;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #E8EFE5;
+  color: #1E293B;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Maru Gothic ProN", "BIZ UDPGothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   overflow-x: clip;
 }
