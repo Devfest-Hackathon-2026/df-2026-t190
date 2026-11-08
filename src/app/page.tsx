@@ -1,200 +1,163 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   Camera,
-  ImageIcon,
-  AlertTriangle,
-  User,
-  CreditCard,
-  Zap,
-  Check,
-  X,
-  RotateCcw,
-  Sparkles,
+  Bell,
   ChevronRight,
   ArrowLeft,
-  Volume2,
+  Heart,
+  Zap,
+  RotateCcw,
+  Sparkles,
+  Check,
+  X,
+  Sliders,
+  AlertTriangle,
+  QrCode,
+  Scan,
 } from "lucide-react";
 
-type Screen = "home" | "camera" | "settings" | "result" | "proposal";
+type ActiveTab = "home" | "scan" | "detail" | "setting";
 
-export default function HalalApp() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>("home");
+export default function HalalScanApp() {
+  const [currentTab, setCurrentTab] = useState<ActiveTab>("home");
 
   // 設定状態
-  const [alcoholPolicy, setAlcoholPolicy] = useState<"avoid" | "conditional" | "allow">("avoid");
-  const [fermentedPolicy, setFermentedPolicy] = useState<"avoid" | "conditional" | "allow">("avoid");
+  const [alcoholDirect, setAlcoholDirect] = useState<"strict" | "allow">("strict");
+  const [alcoholCooked, setAlcoholCooked] = useState<"strict" | "allow">("strict");
+  const [porkPolicy, setPorkPolicy] = useState<"strict" | "allow">("strict");
 
-  // カメラ・画像
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [staffReaction, setStaffReaction] = useState<"yes" | "no" | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  // 画像アップロード処理
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCapturedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // サンプル画像（にくじゃが）
-  const loadDemoNikujaga = () => {
-    setCapturedImage("https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80");
-  };
-
-  // 解析実行
-  const runAnalysis = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setCurrentScreen("result");
-      setStaffReaction(null);
-    }, 1000);
-  };
+  // スキャン・解析ステート
+  const [isScanning, setIsScanning] = useState(false);
+  const [staffResponse, setStaffResponse] = useState<"yes" | "no" | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#D5E1D2] flex flex-col items-center justify-center p-0 sm:p-4 select-none">
-      
-      {/* 画面切り替えデバッグバー（上部） */}
-      <div className="w-full max-w-md mb-2 hidden sm:flex items-center justify-between px-3 text-[11px] text-slate-600 bg-white/70 backdrop-blur-xs py-1.5 rounded-full border border-white/50">
-        <span className="font-bold text-[#556E4A]">画面切替:</span>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setCurrentScreen("home")}
-            className={`px-2 py-0.5 rounded-full ${currentScreen === "home" ? "bg-[#556E4A] text-white font-bold" : "hover:bg-black/5"}`}
-          >
-            ①ホーム
-          </button>
-          <button
-            onClick={() => setCurrentScreen("camera")}
-            className={`px-2 py-0.5 rounded-full ${currentScreen === "camera" ? "bg-[#556E4A] text-white font-bold" : "hover:bg-black/5"}`}
-          >
-            ②カメラ
-          </button>
-          <button
-            onClick={() => setCurrentScreen("settings")}
-            className={`px-2 py-0.5 rounded-full ${currentScreen === "settings" ? "bg-[#556E4A] text-white font-bold" : "hover:bg-black/5"}`}
-          >
-            ③設定
-          </button>
-          <button
-            onClick={() => setCurrentScreen("result")}
-            className={`px-2 py-0.5 rounded-full ${currentScreen === "result" ? "bg-[#556E4A] text-white font-bold" : "hover:bg-black/5"}`}
-          >
-            ④解析結果
-          </button>
-          <button
-            onClick={() => setCurrentScreen("proposal")}
-            className={`px-2 py-0.5 rounded-full ${currentScreen === "proposal" ? "bg-[#556E4A] text-white font-bold" : "hover:bg-black/5"}`}
-          >
-            ⑤提案
-          </button>
-        </div>
-      </div>
-
-      {/* スマホ本体フレーム */}
-      <div className={`w-full max-w-md min-h-screen sm:min-h-[820px] sm:max-h-[860px] sm:rounded-[44px] shadow-2xl flex flex-col justify-between overflow-hidden relative border-0 sm:border-8 sm:border-slate-800 transition-colors duration-300 ${
-        currentScreen === "camera" ? "bg-black" : "bg-[#DCE8D8]"
-      }`}>
-
-        {/* Dynamic Island / 上部ノッチ & ステータスバー */}
-        <div className={`pt-3 px-7 flex justify-between items-center text-xs font-semibold z-30 shrink-0 ${
-          currentScreen === "camera" ? "text-white" : "text-slate-800"
-        }`}>
-          <span>9:41</span>
-          <div className="w-24 h-4 bg-black rounded-full mx-auto hidden sm:block shadow-xs" />
-          <div className="flex items-center space-x-1.5">
-            <span className="text-[10px]">5G</span>
-            <div className={`w-5 h-2.5 border rounded-xs p-0.5 flex items-center ${currentScreen === "camera" ? "border-white" : "border-slate-800"}`}>
-              <div className={`h-full w-full rounded-2xs ${currentScreen === "camera" ? "bg-white" : "bg-slate-800"}`} />
-            </div>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[#24C27A] flex items-center justify-center p-0 sm:p-6 font-sans antialiased">
+      {/* スマホ本体コンテナ (375px〜400px幅のモダンiPhone比率) */}
+      <div className="w-full max-w-[390px] h-[844px] bg-white rounded-none sm:rounded-[48px] shadow-2xl flex flex-col justify-between overflow-hidden relative border-0 sm:border-[10px] sm:border-slate-900">
+        
         {/* ========================================================================= */}
-        {/* 画面1: ホーム画面                                                         */}
+        {/* 画面1: ホーム画面 (Nutrional Today 風 Halal Today)                        */}
         {/* ========================================================================= */}
-        {currentScreen === "home" && (
-          <div className="flex-1 flex flex-col justify-between p-5 space-y-4 overflow-y-auto">
-            {/* 上部アラートピル */}
-            <div className="bg-white/95 rounded-full py-2 px-4 shadow-xs flex items-center justify-center gap-1.5 mx-auto max-w-xs">
-              <AlertTriangle className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
-              <span className="text-xs font-bold text-slate-800">
-                AIは間違えることがあります。
-              </span>
-            </div>
-
-            {/* 中央メインカード */}
-            <div className="bg-white rounded-3xl p-6 shadow-xs text-center space-y-5 my-auto">
-              <h1 className="text-lg font-black text-slate-800 tracking-tight leading-snug">
-                料理の写真を撮って<br />ハラール判定
-              </h1>
-
-              {/* 可愛いカメラのイラスト */}
-              <div className="w-28 h-24 mx-auto relative flex items-center justify-center">
-                {/* トイカメラ本体 */}
-                <div className="w-24 h-18 bg-[#F49A67] rounded-2xl border-3 border-slate-800 shadow-sm relative flex items-center justify-center">
-                  {/* シャッターボタン */}
-                  <div className="absolute -top-3 right-4 w-6 h-3 bg-[#EE7A38] rounded-t-md border-2 border-slate-800" />
-                  {/* フラッシュ */}
-                  <div className="absolute top-2 left-3 w-3 h-3 rounded-full bg-amber-300 border border-slate-800" />
-                  {/* レンズ */}
-                  <div className="w-12 h-12 rounded-full bg-[#5BA8D4] border-3 border-slate-800 flex items-center justify-center shadow-inner">
-                    <div className="w-6 h-6 rounded-full bg-[#357EA8] flex items-center justify-center">
-                      <div className="w-2 h-2 rounded-full bg-white opacity-80" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* [ カメラを起動する ] ボタン */}
-              <button
-                type="button"
-                onClick={() => setCurrentScreen("camera")}
-                className="w-full py-3.5 px-6 rounded-full text-white font-black text-sm shadow-md transition-all active:scale-98 hover:brightness-105"
-                style={{ backgroundColor: "#556E4A" }}
-              >
-                カメラを起動する
-              </button>
-            </div>
-
-            {/* 下部サマリーカード */}
-            <div className="bg-white rounded-3xl p-5 shadow-xs space-y-3">
+        {currentTab === "home" && (
+          <div className="flex-1 flex flex-col overflow-y-auto bg-[#F8FAF9]">
+            {/* 上部エメラルド曲面ヘッダー */}
+            <div className="bg-[#24C27A] pt-10 pb-8 px-6 rounded-b-[40px] text-white space-y-4 shadow-sm relative">
+              {/* トップバー: アバター & 通知 */}
               <div className="flex justify-between items-center">
-                <h2 className="text-xs font-black text-slate-700 tracking-wide">
-                  現在のハラール基準
-                </h2>
+                <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-lg overflow-hidden shadow-sm">
+                  <span className="text-xl">🧕</span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setCurrentScreen("settings")}
-                  className="text-[11px] text-[#556E4A] font-bold hover:underline"
+                  onClick={() => alert("通知はありません")}
+                  className="px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-white/30 transition-all border border-white/20"
                 >
-                  設定へ ＞
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>Notification</span>
+                  <span className="w-2 h-2 rounded-full bg-amber-300" />
                 </button>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700">直接アルコール:</span>
-                  <span className="px-3 py-1 rounded-xl text-xs font-black bg-[#F7D8B5] text-[#8C4E15]">
-                    {alcoholPolicy === "avoid" ? "避ける" : alcoholPolicy === "conditional" ? "場合による" : "気にしない"}
-                  </span>
+              {/* タイトル */}
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight">Halal Today</h1>
+                <p className="text-xs text-white/80 mt-0.5 font-medium">あなたの信仰に寄り添うスマート食選び</p>
+              </div>
+
+              {/* ヘッダー内フローティングカード */}
+              <div className="bg-white rounded-3xl p-4 text-slate-800 shadow-lg space-y-3">
+                <div className="grid grid-cols-2 gap-3 divide-x divide-slate-100">
+                  {/* 左: アルコール */}
+                  <div className="space-y-1.5 pr-2">
+                    <p className="text-[11px] font-bold text-slate-400">アルコール基準</p>
+                    <p className="text-sm font-black text-slate-800">厳格 (Strict)</p>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-[#24C27A] h-full w-4/5 rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* 右: 豚肉 */}
+                  <div className="space-y-1.5 pl-3">
+                    <p className="text-[11px] font-bold text-slate-400">豚肉・エキス</p>
+                    <p className="text-sm font-black text-rose-500">避ける (Avoid)</p>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-rose-500 h-full w-full rounded-full" />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700">発酵由来:</span>
-                  <span className="px-3 py-1 rounded-xl text-xs font-black bg-[#F7D8B5] text-[#8C4E15]">
-                    {fermentedPolicy === "avoid" ? "避ける" : fermentedPolicy === "conditional" ? "場合による" : "気にしない"}
-                  </span>
+                <div className="pt-1 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                  <span className="text-slate-400 font-semibold">基準のカスタマイズ</span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTab("setting")}
+                    className="text-[#24C27A] font-bold hover:underline flex items-center"
+                  >
+                    More detail <ChevronRight className="w-3 h-3 ml-0.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* コンテンツエリア */}
+            <div className="p-5 space-y-5">
+              {/* プロモーション/AI免責カード */}
+              <div className="bg-white rounded-3xl p-4 shadow-sm border border-slate-100/80 flex items-center justify-between">
+                <div className="space-y-1 max-w-[200px]">
+                  <p className="text-xs font-extrabold text-slate-800 leading-snug">
+                    AIは間違えることがあります
+                  </p>
+                  <p className="text-[11px] text-[#24C27A] font-bold hover:underline cursor-pointer">
+                    安全な確認方法を見る
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-2xl shadow-inner">
+                  🥗
+                </div>
+              </div>
+
+              {/* Suggestion Meal */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-sm font-black text-slate-800">Suggestion Meal</h2>
+                  <span className="text-[11px] text-slate-400 font-semibold">安心メニュー</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* カード 1 */}
+                  <div
+                    onClick={() => {
+                      setCurrentTab("detail");
+                    }}
+                    className="bg-white rounded-3xl p-3.5 shadow-sm border border-slate-100/80 space-y-2.5 cursor-pointer hover:shadow-md transition-all active:scale-98"
+                  >
+                    <div className="aspect-square rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-4xl overflow-hidden relative">
+                      🍲
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black">
+                        要確認
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-800 line-clamp-1">にくじゃが (Nikujaga)</p>
+                      <p className="text-[10px] text-slate-400 font-medium">豚肉・みりん含有</p>
+                    </div>
+                  </div>
+
+                  {/* カード 2 */}
+                  <div className="bg-white rounded-3xl p-3.5 shadow-sm border border-slate-100/80 space-y-2.5">
+                    <div className="aspect-square rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-4xl overflow-hidden relative">
+                      🍣
+                      <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#24C27A] text-white text-[9px] font-black">
+                        Safe
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-slate-800 line-clamp-1">海鮮丼 (Seafood Bowl)</p>
+                      <p className="text-[10px] text-slate-400 font-medium">アルコールなし醤油</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,484 +165,376 @@ export default function HalalApp() {
         )}
 
         {/* ========================================================================= */}
-        {/* 画面2: カメラ画面（完全な黒背景のカメラビュー）                            */}
+        {/* 画面2: カメラスキャン画面 (Doritos スキャン画面完全再現)                  */}
         {/* ========================================================================= */}
-        {currentScreen === "camera" && (
-          <div className="flex-1 flex flex-col justify-between p-6 bg-black text-white relative">
-            {/* 上部ツールバー */}
-            <div className="flex justify-between items-center z-20">
+        {currentTab === "scan" && (
+          <div className="flex-1 flex flex-col justify-between bg-slate-900 relative text-white overflow-hidden">
+            {/* リアルなカメラ背景画像 (料理・パッケージ) */}
+            <div className="absolute inset-0 z-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
+                alt="スキャン対象"
+                className="w-full h-full object-cover brightness-75 scale-105"
+              />
+              <div className="absolute inset-0 bg-black/20" />
+            </div>
+
+            {/* 上部ヘッダー (戻る & Flash off) */}
+            <div className="relative z-10 pt-10 px-6 flex justify-between items-center">
               <button
                 type="button"
-                onClick={() => setCurrentScreen("home")}
-                className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white"
+                onClick={() => setCurrentTab("home")}
+                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-yellow-300">
-                <Zap className="w-4 h-4" />
-              </div>
-            </div>
 
-            {/* 中央ファインダー枠 [  ] */}
-            <div className="my-auto w-full aspect-square max-w-[280px] mx-auto relative flex items-center justify-center">
-              {/* 四隅の繊細な白いL字枠 */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-t-3 border-l-3 border-white rounded-tl-lg" />
-              <div className="absolute top-0 right-0 w-8 h-8 border-t-3 border-r-3 border-white rounded-tr-lg" />
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-3 border-l-3 border-white rounded-bl-lg" />
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-3 border-r-3 border-white rounded-br-lg" />
-
-              {/* 撮影画像プレビュー（もしあれば） */}
-              {capturedImage ? (
-                <div className="relative w-full h-full p-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={capturedImage} alt="撮影画像" className="w-full h-full object-cover rounded-xl" />
-                  <button
-                    type="button"
-                    onClick={() => setCapturedImage(null)}
-                    className="absolute top-3 right-3 bg-black/60 text-white rounded-full p-1.5"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="text-center space-y-2 opacity-60">
-                  <Camera className="w-12 h-12 mx-auto text-white" />
-                  <p className="text-xs text-white">料理を枠内に収めてください</p>
-                </div>
-              )}
-            </div>
-
-            {/* 下部アクションエリア */}
-            <div className="space-y-4 z-20">
-              {/* 大きな白いシャッターボタン */}
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    loadDemoNikujaga();
-                  }}
-                  className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center p-1 active:scale-95 transition-all"
-                  title="シャッターを押す（デモ画像撮影）"
-                >
-                  <div className="w-full h-full rounded-full bg-white shadow-md" />
-                </button>
-              </div>
-
-              {/* [ アルバムから選択 ] ボタン（半透明ピル形状） */}
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="py-2.5 px-6 rounded-full bg-white/20 border border-white/30 text-white font-bold text-xs backdrop-blur-md hover:bg-white/30 transition-all flex items-center gap-2"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  <span>アルバムから選択</span>
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageFile}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
-
-              {/* [ 解析する ] ボタン */}
               <button
                 type="button"
-                onClick={runAnalysis}
-                disabled={isAnalyzing}
-                className="w-full py-3.5 px-6 rounded-full text-white font-black text-sm shadow-lg transition-all active:scale-98 flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#556E4A" }}
+                className="px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-black/60 transition-all border border-white/20"
               >
-                {isAnalyzing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>解析中...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>解析する</span>
-                  </>
-                )}
-              </button>
-
-              {/* 最下部注意アラート */}
-              <p className="text-center text-[11px] text-amber-300 font-semibold flex items-center justify-center gap-1">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                <span>AIは間違えることがあります。</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* 画面3: ユーザーの設定画面                                                 */}
-        {/* ========================================================================= */}
-        {currentScreen === "settings" && (
-          <div className="flex-1 flex flex-col justify-between p-5 space-y-4 overflow-y-auto">
-            {/* タイトル */}
-            <h1 className="text-center text-lg font-black text-slate-800 pt-1">
-              ユーザーの設定
-            </h1>
-
-            <div className="space-y-4 my-auto">
-              {/* カード1: ① アルコールが入っている食品 */}
-              <div className="bg-white rounded-3xl p-5 shadow-xs space-y-3">
-                <h2 className="text-xs font-black text-slate-800">
-                  ① アルコールが入っている食品
-                </h2>
-
-                {/* アルコール禁止イラスト */}
-                <div className="text-center py-1">
-                  <div className="w-16 h-16 mx-auto relative flex items-center justify-center">
-                    <span className="text-3xl">🍷🍺</span>
-                    <div className="absolute inset-0 border-3 border-rose-500 rounded-full flex items-center justify-center">
-                      <div className="w-full h-0.5 bg-rose-500 rotate-45 transform" />
-                    </div>
-                  </div>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">アルコール</p>
-                </div>
-
-                {/* 3段階スイッチ */}
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl text-[11px] font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setAlcoholPolicy("avoid")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      alcoholPolicy === "avoid"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    避ける
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAlcoholPolicy("conditional")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      alcoholPolicy === "conditional"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    場合によっては<br className="sm:hidden" />気にしない
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAlcoholPolicy("allow")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      alcoholPolicy === "allow"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    気にしない
-                  </button>
-                </div>
-              </div>
-
-              {/* カード2: ② 製造過程で発生・残存0%の食品 */}
-              <div className="bg-white rounded-3xl p-5 shadow-xs space-y-3">
-                <h2 className="text-xs font-black text-slate-800">
-                  ② 製造過程で発生・残存0%の食品
-                </h2>
-
-                {/* 醤油醸造イラスト */}
-                <div className="text-center py-1">
-                  <span className="text-4xl">🏭🥢</span>
-                  <p className="text-[11px] font-bold text-slate-500 mt-1">発酵調味料（醤油・味噌）</p>
-                </div>
-
-                {/* 3段階スイッチ */}
-                <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl text-[11px] font-bold">
-                  <button
-                    type="button"
-                    onClick={() => setFermentedPolicy("avoid")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      fermentedPolicy === "avoid"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    避ける
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFermentedPolicy("conditional")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      fermentedPolicy === "conditional"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    場合によっては<br className="sm:hidden" />気にしない
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFermentedPolicy("allow")}
-                    className={`py-2 rounded-xl text-center transition-all ${
-                      fermentedPolicy === "allow"
-                        ? "bg-[#556E4A] text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    気にしない
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* ホームへ戻るボタン */}
-            <button
-              type="button"
-              onClick={() => setCurrentScreen("home")}
-              className="w-full py-3 rounded-full text-white font-black text-xs shadow-md"
-              style={{ backgroundColor: "#556E4A" }}
-            >
-              設定を保存して戻る
-            </button>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* 画面4: 解析結果画面（料理名：にくじゃが）                                  */}
-        {/* ========================================================================= */}
-        {currentScreen === "result" && (
-          <div className="flex-1 flex flex-col justify-between p-5 space-y-4 overflow-y-auto">
-            {/* タイトル */}
-            <h1 className="text-center text-lg font-black text-slate-800 pt-1">
-              解析結果
-            </h1>
-
-            {/* 料理名：にくじゃが */}
-            <div className="text-center py-1">
-              <h2 className="text-xl font-black text-slate-900 tracking-wide">
-                料理名：にくじゃが
-              </h2>
-            </div>
-
-            <div className="space-y-3.5 my-auto">
-              {/* カード1: 含まれている（ぶた肉 ✕ ⚠️、しょうゆ） */}
-              <div className="bg-white rounded-3xl p-5 shadow-xs space-y-4">
-                <span className="text-xs font-black text-slate-500 block border-b border-slate-100 pb-2">
-                  含まれている
-                </span>
-
-                <div className="space-y-3">
-                  {/* ぶた肉 */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-xl shrink-0">
-                        🐷
-                      </div>
-                      <span className="text-sm font-black text-slate-800">ぶた肉</span>
-                    </div>
-                    {/* 右側の ✕ ⚠️ */}
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-6 h-6 rounded-full bg-rose-500 text-white font-black text-xs flex items-center justify-center">
-                        ✕
-                      </span>
-                      <AlertTriangle className="w-5 h-5 text-amber-500 fill-amber-500" />
-                    </div>
-                  </div>
-
-                  {/* しょう油 */}
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-xl shrink-0">
-                        🍶
-                      </div>
-                      <span className="text-sm font-black text-slate-800">しょう油</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                        微量残存
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* カード2: 入っている可能性（加熱みりんなど） */}
-              <div className="bg-white rounded-3xl p-4 shadow-xs space-y-1.5">
-                <span className="text-xs font-black text-slate-500 block">
-                  入っている可能性
-                </span>
-                <p className="text-xs text-slate-700 font-bold leading-relaxed">
-                  調理時にみりんや料理酒（アルコール成分）が使われている可能性があります。
-                </p>
-              </div>
-
-              {/* 次へ進む（あなたへの提案へ） */}
-              <button
-                type="button"
-                onClick={() => setCurrentScreen("proposal")}
-                className="w-full py-3.5 px-6 rounded-full text-white font-black text-sm shadow-md transition-all active:scale-98 flex items-center justify-center gap-2"
-                style={{ backgroundColor: "#556E4A" }}
-              >
-                <span>あなたへの提案を見る</span>
-                <ChevronRight className="w-4 h-4" />
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                <span>Flash off</span>
               </button>
             </div>
 
-            {/* 下部アラートピル */}
-            <div className="bg-white/95 rounded-full py-2 px-4 shadow-xs flex items-center justify-center gap-1.5 mx-auto max-w-xs">
-              <AlertTriangle className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
-              <span className="text-xs font-bold text-slate-800">
-                AIは間違えることがあります。
-              </span>
-            </div>
-          </div>
-        )}
+            {/* 中央: スキャニング枠 & レーザー */}
+            <div className="relative z-10 my-auto flex flex-col items-center justify-center px-8">
+              <div className="w-[260px] h-[260px] relative flex items-center justify-center">
+                {/* 4隅の太いホワイト角丸枠 [  ] */}
+                <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-white rounded-tl-2xl" />
+                <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-white rounded-tr-2xl" />
+                <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-white rounded-bl-2xl" />
+                <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-white rounded-br-2xl" />
 
-        {/* ========================================================================= */}
-        {/* 画面5: あなたへの提案 ＆ 店員への提案画面                                 */}
-        {/* ========================================================================= */}
-        {currentScreen === "proposal" && (
-          <div className="flex-1 flex flex-col justify-between p-5 space-y-4 overflow-y-auto">
-            {/* 上部カード: あなたへの提案 */}
-            <div className="bg-white rounded-3xl p-5 shadow-xs text-center space-y-3">
-              <h2 className="text-base font-black text-slate-800">
-                あなたへの提案
-              </h2>
-
-              <div className="space-y-1.5 py-1">
-                <p className="text-sm font-black text-slate-800">
-                  ぶた肉を避けて食べますか？
-                </p>
-                <p className="text-xs font-bold text-slate-400">or</p>
-                <p className="text-sm font-bold text-slate-600">
-                  別の料理を選択する
-                </p>
+                {/* スキャン中のグリーングロー光線 */}
+                <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#24C27A] to-transparent shadow-[0_0_15px_#24C27A] animate-pulse" />
               </div>
             </div>
 
-            {/* 下部カード: 店員への提案（手書きメモの「はい」「ごめんなさい」ボタン！） */}
-            <div className="bg-white rounded-3xl p-5 shadow-xs text-center space-y-4">
-              <h2 className="text-base font-black text-slate-800">
-                店員への提案
-              </h2>
-
-              <p className="text-base sm:text-lg font-black text-slate-900 leading-snug px-2">
-                ぶた肉を使わずに調理して頂けますか？
-              </p>
-
-              {/* 店員さん用ボタン群 */}
-              <div className="space-y-2.5 pt-1">
-                <p className="text-[11px] font-bold text-slate-400">
-                  店員さん、当てはまる方をタップしてください：
-                </p>
-
-                {/* 上段: [ はい ] [ はい ] */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setStaffReaction("yes")}
-                    className={`py-3.5 px-4 rounded-full font-black text-sm text-white shadow-sm transition-all active:scale-95 ${
-                      staffReaction === "yes" ? "ring-4 ring-sky-300 scale-102" : ""
-                    }`}
-                    style={{ backgroundColor: "#0EA5E9" }}
-                  >
-                    はい
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setStaffReaction("yes")}
-                    className={`py-3.5 px-4 rounded-full font-black text-sm text-white shadow-sm transition-all active:scale-95 ${
-                      staffReaction === "yes" ? "ring-4 ring-emerald-300 scale-102" : ""
-                    }`}
-                    style={{ backgroundColor: "#22C55E" }}
-                  >
-                    はい
-                  </button>
-                </div>
-
-                {/* 下段: [ ごめんなさい、できません ] */}
-                <button
-                  type="button"
-                  onClick={() => setStaffReaction("no")}
-                  className={`w-full py-3 px-4 rounded-full font-bold text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all active:scale-98 ${
-                    staffReaction === "no" ? "ring-4 ring-rose-200 bg-rose-100 text-rose-800" : ""
-                  }`}
-                >
-                  ごめんなさい、できません
-                </button>
-              </div>
-
-              {/* タップ後のリアクション演出 */}
-              {staffReaction === "yes" && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-black text-emerald-800 animate-fadeIn">
-                  🎉 ありがとうございます！調理をお願いしましょう！
-                </div>
-              )}
-              {staffReaction === "no" && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-black text-rose-800 animate-fadeIn">
-                  💡 承知しました。別のハラール対応メニューを探しましょう。
-                </div>
-              )}
-            </div>
-
-            {/* ホームに戻る */}
-            <button
-              type="button"
-              onClick={() => setCurrentScreen("home")}
-              className="w-full py-2.5 rounded-full text-slate-500 font-bold text-xs hover:text-slate-800 transition-all"
-            >
-              ホームに戻る
-            </button>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* ボトムナビゲーションバー（白背景、角丸、3つのアイコン）                     */}
-        {/* ========================================================================= */}
-        {currentScreen !== "camera" && (
-          <nav className="bg-white rounded-t-3xl border-t border-slate-100/80 px-8 py-3 flex justify-between items-center z-20 shadow-md">
-            {/* 左: ユーザー設定 */}
-            <button
-              type="button"
-              onClick={() => setCurrentScreen("settings")}
-              className={`flex flex-col items-center gap-1 transition-all ${
-                currentScreen === "settings" ? "text-[#556E4A] font-black scale-105" : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              <User className="w-5 h-5" />
-              <span className="text-[10px]">ユーザー設定</span>
-            </button>
-
-            {/* 中央: カメラ */}
-            <button
-              type="button"
-              onClick={() => setCurrentScreen("camera")}
-              className="flex flex-col items-center gap-1 -mt-4 transition-all hover:scale-105 active:scale-95"
-            >
+            {/* 下部: 検出されたアイテムカード (画像再現！) */}
+            <div className="relative z-10 p-5 pb-6 space-y-3">
               <div
-                className="w-13 h-13 rounded-full flex items-center justify-center text-white shadow-lg border-3 border-white"
-                style={{ backgroundColor: "#556E4A" }}
+                onClick={() => setCurrentTab("detail")}
+                className="bg-white rounded-3xl p-4 shadow-2xl flex items-center justify-between text-slate-800 cursor-pointer active:scale-98 transition-all hover:shadow-emerald-500/20"
               >
-                <Camera className="w-6 h-6" />
-              </div>
-              <span className="text-[10px] font-bold text-slate-400">
-                カメラ
-              </span>
-            </button>
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-[#E8F8F0] flex items-center justify-center text-3xl shadow-inner shrink-0">
+                    🍲
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 leading-tight">
+                      にくじゃが (Nikujaga)
+                    </h3>
+                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">Simmered Beef/Pork & Potato</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-bold text-amber-500 flex items-center gap-0.5">
+                        ★ 4.3
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-500 text-[10px] font-black border border-rose-200">
+                        Not fit
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* 右: カード */}
+                <div className="w-8 h-8 rounded-full bg-[#E8F8F0] text-[#24C27A] flex items-center justify-center">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 画面3: 詳細・判定結果 ＆ 店員交渉画面 (右側のスマホ完全再現)             */}
+        {/* ========================================================================= */}
+        {currentTab === "detail" && (
+          <div className="flex-1 flex flex-col justify-between overflow-y-auto bg-white">
+            <div className="p-6 space-y-5">
+              {/* トップバー */}
+              <div className="flex justify-between items-center">
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab("home")}
+                  className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-rose-500"
+                >
+                  <Heart className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 料理メインサムネイル */}
+              <div className="text-center space-y-2">
+                <div className="w-32 h-32 mx-auto rounded-3xl bg-[#E8F8F0] flex items-center justify-center text-6xl shadow-md border-4 border-white">
+                  🍲
+                </div>
+                <div>
+                  <h1 className="text-lg font-black text-slate-900">
+                    にくじゃが (Nikujaga)
+                  </h1>
+                  <p className="text-xs text-slate-400 font-medium">Traditional Simmered Dish - 250g</p>
+                  <p className="text-xs font-bold text-amber-500 mt-1">★ 4.3 (Halal Check)</p>
+                </div>
+              </div>
+
+              {/* 判定バッジ: Not fit with your criteria */}
+              <div className="bg-[#FFF1F2] border border-rose-200 rounded-2xl py-3 px-4 flex items-center justify-between text-rose-600">
+                <span className="text-xs font-extrabold tracking-tight">
+                  Not fit with your criteria
+                </span>
+                <span className="text-sm">👎</span>
+              </div>
+
+              {/* Negatives (懸念成分) */}
+              <div className="space-y-3">
+                <h2 className="text-xs font-black text-slate-900 tracking-wider uppercase">
+                  Negatives (要注意)
+                </h2>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <div className="flex justify-between font-bold text-slate-700 mb-1">
+                      <span>ぶた肉 (Pork Meat & Broth)</span>
+                      <span className="text-rose-500">高リスク</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-rose-500 h-full w-[85%] rounded-full" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between font-bold text-slate-700 mb-1">
+                      <span>加熱みりん (Cooked Mirin)</span>
+                      <span className="text-amber-500">残存の可能性</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-amber-400 h-full w-[50%] rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Positives (安全成分) */}
+              <div className="space-y-3 pt-1">
+                <h2 className="text-xs font-black text-slate-900 tracking-wider uppercase">
+                  Positives (安心成分)
+                </h2>
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <div className="flex justify-between font-bold text-slate-700 mb-1">
+                      <span>じゃがいも・人参 (Vegetables)</span>
+                      <span className="text-[#24C27A]">100% Halal</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-[#24C27A] h-full w-full rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 店員への提案カードエリア */}
+              <div className="border-2 border-[#24C27A] bg-[#F0FDF4] rounded-3xl p-5 space-y-4 shadow-sm">
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#24C27A] bg-white px-2.5 py-1 rounded-full border border-[#24C27A]/30">
+                    店員さんに見せる画面
+                  </span>
+                  <p className="text-base font-black text-slate-900 pt-1 leading-snug">
+                    「ぶた肉を使わずに調理して頂けますか？」
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    (Could you cook this without using pork?)
+                  </p>
+                </div>
+
+                {/* 店員さん用回答ボタン */}
+                <div className="space-y-2 pt-1">
+                  <p className="text-center text-[10px] font-bold text-slate-400">
+                    店員さん、当てはまる方をタップしてください：
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStaffResponse("yes")}
+                      className={`py-3 rounded-full font-black text-xs text-white shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1 ${
+                        staffResponse === "yes" ? "bg-sky-600 ring-4 ring-sky-200" : "bg-sky-500 hover:bg-sky-600"
+                      }`}
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>はい (Yes)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStaffResponse("yes")}
+                      className={`py-3 rounded-full font-black text-xs text-white shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1 ${
+                        staffResponse === "yes" ? "bg-[#24C27A] ring-4 ring-emerald-200" : "bg-[#24C27A] hover:bg-[#1EA866]"
+                      }`}
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>はい (Yes)</span>
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setStaffResponse("no")}
+                    className={`w-full py-2.5 rounded-full font-bold text-xs text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-all ${
+                      staffResponse === "no" ? "ring-4 ring-rose-200 bg-rose-50 text-rose-700" : ""
+                    }`}
+                  >
+                    ごめんなさい、できません (No)
+                  </button>
+                </div>
+
+                {/* リアクション */}
+                {staffResponse === "yes" && (
+                  <div className="p-3 bg-white rounded-2xl text-center text-xs font-black text-[#24C27A] border border-[#24C27A] shadow-xs">
+                    🎉 ありがとうございます！安心して注文できます！
+                  </div>
+                )}
+                {staffResponse === "no" && (
+                  <div className="p-3 bg-white rounded-2xl text-center text-xs font-black text-rose-600 border border-rose-300 shadow-xs">
+                    💡 承知しました。別の安心メニューを選びましょう！
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* 画面4: 設定画面 (Setting)                                                 */}
+        {/* ========================================================================= */}
+        {currentTab === "setting" && (
+          <div className="flex-1 flex flex-col justify-between p-6 bg-[#F8FAF9] overflow-y-auto">
+            <div className="space-y-5">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab("home")}
+                  className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-slate-700 shadow-xs"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <h1 className="text-xl font-extrabold text-slate-900">ユーザー設定</h1>
+              </div>
+
+              {/* アルコール設定 */}
+              <div className="bg-white rounded-3xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-slate-800">直接アルコール含有</p>
+                    <p className="text-[11px] text-slate-400">酒粕、洋酒入りスイーツ等</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAlcoholDirect(alcoholDirect === "strict" ? "allow" : "strict")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                      alcoholDirect === "strict"
+                        ? "bg-rose-500 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {alcoholDirect === "strict" ? "避ける (Strict)" : "気にしない"}
+                  </button>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-slate-800">加熱揮発アルコール</p>
+                    <p className="text-[11px] text-slate-400">みりん、料理酒等の焼き・煮込み</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAlcoholCooked(alcoholCooked === "strict" ? "allow" : "strict")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                      alcoholCooked === "strict"
+                        ? "bg-amber-500 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {alcoholCooked === "strict" ? "要確認 (Check)" : "気にしない"}
+                  </button>
+                </div>
+              </div>
+
+              {/* 豚肉設定 */}
+              <div className="bg-white rounded-3xl p-5 shadow-sm space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-slate-800">豚肉・豚骨エキス</p>
+                    <p className="text-[11px] text-slate-400">豚由来成分全般</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPorkPolicy(porkPolicy === "strict" ? "allow" : "strict")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-black transition-all ${
+                      porkPolicy === "strict"
+                        ? "bg-rose-500 text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {porkPolicy === "strict" ? "厳格に避ける" : "気にしない"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={() => setCurrentScreen("proposal")}
-              className={`flex flex-col items-center gap-1 transition-all ${
-                currentScreen === "proposal" ? "text-[#556E4A] font-black scale-105" : "text-slate-400 hover:text-slate-600"
-              }`}
+              onClick={() => setCurrentTab("home")}
+              className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-sm shadow-md"
             >
-              <CreditCard className="w-5 h-5" />
-              <span className="text-[10px]">カード</span>
+              設定を保存
             </button>
-          </nav>
+          </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* ボトムナビゲーションバー (中央スキャンボタンが丸く浮き出た神デザイン！)     */}
+        {/* ========================================================================= */}
+        <nav className="bg-white border-t border-slate-100 px-8 py-3 flex justify-between items-center z-30 shadow-lg relative">
+          {/* Home */}
+          <button
+            type="button"
+            onClick={() => setCurrentTab("home")}
+            className={`flex flex-col items-center gap-1 transition-all ${
+              currentTab === "home" ? "text-[#24C27A] font-black" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <span className="text-xs font-extrabold">Home</span>
+            {currentTab === "home" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A]" />}
+          </button>
+
+          {/* 中央: 浮き出た丸いスキャンボタン */}
+          <button
+            type="button"
+            onClick={() => setCurrentTab("scan")}
+            className="flex flex-col items-center -mt-6 group active:scale-95 transition-all"
+          >
+            <div className="w-14 h-14 rounded-full bg-[#24C27A] text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 border-4 border-white group-hover:scale-105 transition-all">
+              <Scan className="w-6 h-6" />
+            </div>
+          </button>
+
+          {/* Setting */}
+          <button
+            type="button"
+            onClick={() => setCurrentTab("setting")}
+            className={`flex flex-col items-center gap-1 transition-all ${
+              currentTab === "setting" ? "text-[#24C27A] font-black" : "text-slate-400 hover:text-slate-600"
+            }`}
+          >
+            <span className="text-xs font-extrabold">Setting</span>
+            {currentTab === "setting" && <span className="w-1.5 h-1.5 rounded-full bg-[#24C27A]" />}
+          </button>
+        </nav>
 
       </div>
     </div>
