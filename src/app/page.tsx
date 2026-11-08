@@ -4,10 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Camera,
   ArrowLeft,
-  Zap,
-  ZapOff,
   RotateCcw,
-  Sparkles,
   Check,
   AlertTriangle,
   AlertCircle,
@@ -30,6 +27,7 @@ import {
   Beef,
   Save,
   FileText,
+  SwitchCamera,
 } from "lucide-react";
 import { EnhancedAnalyzeResult } from "./api/analyze/route";
 import { ToleranceLevel } from "@/types";
@@ -298,7 +296,7 @@ export default function HalalScanApp() {
 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [flashOn, setFlashOn] = useState(false);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
   // 解析・判定ステート
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -321,49 +319,60 @@ export default function HalalScanApp() {
     setIsCameraActive(false);
   }, []);
 
-  // カメラ起動処理
-  const startCamera = useCallback(async () => {
-    setCameraError(null);
-    stopCamera();
+  // カメラ起動処理 (外カメラ / 内カメラ対応)
+  const startCamera = useCallback(
+    async (targetMode?: "environment" | "user") => {
+      const mode = targetMode || facingMode;
+      setCameraError(null);
+      stopCamera();
 
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Device does not support camera API");
-      }
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Device does not support camera API");
+        }
 
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch((err) => {
-            console.error("Video play error:", err);
-          });
+        const constraints: MediaStreamConstraints = {
+          video: {
+            facingMode: { ideal: mode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
         };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        streamRef.current = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch((err) => {
+              console.error("Video play error:", err);
+            });
+          };
+        }
+        setIsCameraActive(true);
+      } catch (err: unknown) {
+        console.warn("Camera start failed:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Camera launch failed";
+        setCameraError(
+          errorMessage.includes("Permission") || errorMessage.includes("NotAllowed")
+            ? t.cameraErrorPermission
+            : t.cameraFallbackGuide
+        );
+        setIsCameraActive(false);
       }
-      setIsCameraActive(true);
-    } catch (err: unknown) {
-      console.warn("Camera start failed:", err);
-      const errorMessage =
-        err instanceof Error ? err.message : "Camera launch failed";
-      setCameraError(
-        errorMessage.includes("Permission") || errorMessage.includes("NotAllowed")
-          ? t.cameraErrorPermission
-          : t.cameraFallbackGuide
-      );
-      setIsCameraActive(false);
-    }
-  }, [stopCamera, t.cameraFallbackGuide, t.cameraErrorPermission]);
+    },
+    [facingMode, stopCamera, t.cameraFallbackGuide, t.cameraErrorPermission]
+  );
+
+  // 外カメラ / 内カメラの切り替えハンドラー
+  const toggleCameraFacing = () => {
+    const nextMode = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+  };
 
   // タブ変更時にカメラの起動・停止を制御
   useEffect(() => {
@@ -871,7 +880,7 @@ export default function HalalScanApp() {
                   </div>
                   <button
                     type="button"
-                    onClick={startCamera}
+                    onClick={() => startCamera()}
                     className="px-4 py-2 rounded-full bg-[#24C27A] text-white text-xs font-bold hover:bg-[#1EA866] transition-all cursor-pointer"
                   >
                     {t.restartCamera}
@@ -880,12 +889,12 @@ export default function HalalScanApp() {
               )}
             </div>
 
-            {/* 上部ヘッダーバー: 戻る & 言語切替 & フラッシュ */}
-            <div className="relative z-20 pt-10 px-6 flex justify-between items-center">
+            {/* 上部ヘッダーバー: 戻る & 言語切替 & カメラ切り替え(外/内) */}
+            <div className="relative z-20 pt-12 px-6 flex justify-between items-center">
               <button
                 type="button"
                 onClick={() => setCurrentTab("home")}
-                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all border border-white/20 cursor-pointer"
+                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all border border-white/20 cursor-pointer active:scale-95 shadow-md"
                 aria-label={t.back}
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -895,28 +904,21 @@ export default function HalalScanApp() {
                 <button
                   type="button"
                   onClick={toggleLanguage}
-                  className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-black flex items-center gap-1 hover:bg-black/60 transition-all border border-white/20 text-white cursor-pointer"
+                  className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-black flex items-center gap-1 hover:bg-black/60 transition-all border border-white/20 text-white cursor-pointer active:scale-95 shadow-md"
                 >
-                  <Globe className="w-3.5 h-3.5 text-white" />
+                  <Globe className="w-3.5 h-3.5 text-[#24C27A]" />
                   <span>{lang}</span>
                 </button>
 
+                {/* 外カメラ/内カメラ切り替えボタン */}
                 <button
                   type="button"
-                  onClick={() => setFlashOn(!flashOn)}
-                  className="px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-xs font-bold flex items-center gap-1.5 hover:bg-black/60 transition-all border border-white/20 text-white cursor-pointer"
+                  onClick={toggleCameraFacing}
+                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-all border border-white/20 cursor-pointer active:scale-95 shadow-md"
+                  title={lang === "JP" ? "カメラ切り替え (外/内)" : "Switch Camera (Back/Front)"}
+                  aria-label="Switch Camera"
                 >
-                  {flashOn ? (
-                    <>
-                      <Zap className="w-3.5 h-3.5 text-amber-300" />
-                      <span>{t.flashOn}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ZapOff className="w-3.5 h-3.5 text-white/80" />
-                      <span>{t.flashOff}</span>
-                    </>
-                  )}
+                  <SwitchCamera className="w-5 h-5 text-white" />
                 </button>
               </div>
             </div>
@@ -936,35 +938,32 @@ export default function HalalScanApp() {
             </div>
 
             {/* 下部: カメラシャッター & アルバム選択コントロールバー */}
-            <div className="relative z-20 p-6 pb-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-around">
+            <div className="relative z-20 px-8 pb-10 pt-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between">
+              {/* アルバムから選択 */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95 cursor-pointer"
+                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95 cursor-pointer shadow-md"
                 title={t.selectFromAlbum}
+                aria-label={t.selectFromAlbum}
               >
                 <ImageIcon className="w-5 h-5" />
               </button>
 
+              {/* 本格シャッターボタン (中央配置) */}
               <button
                 type="button"
                 onClick={capturePhoto}
                 className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center p-1 group active:scale-90 transition-all shadow-xl cursor-pointer"
                 aria-label={t.takePhoto}
               >
-                <div className="w-full h-full rounded-full bg-[#24C27A] group-hover:bg-[#1EA866] transition-all flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-[#24C27A] group-hover:bg-[#1EA866] transition-all flex items-center justify-center shadow-inner">
                   <Camera className="w-7 h-7 text-white stroke-[2.2]" />
                 </div>
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleSampleRun("nikujaga")}
-                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex flex-col items-center justify-center text-white border border-white/30 hover:bg-white/30 transition-all active:scale-95 cursor-pointer"
-                title={t.trySample}
-              >
-                <Sparkles className="w-5 h-5 text-amber-300" />
-              </button>
+              {/* 右側スペーサー（中央のシャッターを美しくセンター配置するためのバランス要素） */}
+              <div className="w-12 h-12 opacity-0 pointer-events-none" />
             </div>
           </div>
         )}
