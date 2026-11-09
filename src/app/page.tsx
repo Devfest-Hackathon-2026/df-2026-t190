@@ -1467,31 +1467,31 @@ export default function HalalScanApp() {
                           setStaffCardMode("substitute");
                           setIsFullscreenStaffView(true);
                         }}
-                        className="w-full p-4 rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-amber-300/40"
+                        className="w-full p-4 rounded-3xl bg-amber-50/80 border-2 border-amber-300 hover:border-amber-400 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
                       >
-                        <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
-                          <Sparkles className="w-5 h-5 text-amber-100" />
+                        <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                          <Sparkles className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
                               {t.substituteOptionBadge}
                             </span>
-                            <span className="text-[9px] font-bold text-amber-100 bg-black/25 px-1.5 py-0.5 rounded-full">
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-200/60 px-1.5 py-0.5 rounded-full">
                               {t.recommendedBadge}
                             </span>
                           </div>
-                          <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
+                          <h4 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
                             {lang === "JP"
                               ? `「${getTargetIngredientText(analysisResult)}」の代わりに【${getSubstituteItemsText(analysisResult)}】で味付けしてもらう`
                               : `Substitute [${getTargetIngredientText(analysisResult, "EN")}] with [${getSubstituteItemsText(analysisResult)}]`}
                           </h4>
-                          <p className="text-[11px] text-amber-100/95 mt-1 leading-relaxed break-words">
+                          <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
                             {getSubstituteAdvice(analysisResult)}
                           </p>
-                          <p className="text-[10px] font-bold text-amber-200 mt-2 flex items-center gap-1">
+                          <p className="text-[10px] font-bold text-amber-700 mt-2 flex items-center gap-1">
                             <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
-                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-amber-600" />
                           </p>
                         </div>
                       </button>
@@ -1504,28 +1504,28 @@ export default function HalalScanApp() {
                         setStaffCardMode("remove");
                         setIsFullscreenStaffView(true);
                       }}
-                      className="w-full p-4 rounded-3xl bg-gradient-to-br from-[#24C27A] to-[#1EA866] text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-emerald-300/40"
+                      className="w-full p-4 rounded-3xl bg-emerald-50/80 border-2 border-emerald-300 hover:border-emerald-400 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
                     >
-                      <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                         <Utensils className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-white/90 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full tracking-wider">
                             {t.option1Badge}
                           </span>
                         </div>
-                        <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
+                        <h4 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
                           {lang === "JP"
                             ? `「${getConciseConcerningIngredientsText(analysisResult)}」を抜いてこの料理を食べる`
                             : `Eat this dish without ${getConciseConcerningIngredientsText(analysisResult, "EN")}`}
                         </h4>
-                        <p className="text-[11px] text-white/90 mt-1 leading-relaxed break-words">
+                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
                           {t.option1Desc}
                         </p>
-                        <p className="text-[10px] font-bold text-white mt-2 flex items-center gap-1">
+                        <p className="text-[10px] font-bold text-emerald-700 mt-2 flex items-center gap-1">
                           <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
-                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-emerald-600" />
                         </p>
                       </div>
                     </button>
