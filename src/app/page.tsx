@@ -748,21 +748,45 @@ export default function HalalScanApp() {
 
   const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null) => {
     if (!item || !item.substitute_proposal) return "";
+
+    const normalizeItem = (name: string): string => {
+      if (name.includes("オリーブオイル") || name.includes("オリーブ油")) {
+        return "植物由来の油";
+      }
+      return name;
+    };
+
+    const normalizeItemEn = (name: string): string => {
+      if (name.toLowerCase().includes("olive")) {
+        return "Plant-based oil";
+      }
+      return name;
+    };
+
     if (lang === "JP") {
-      return item.substitute_proposal.substitute_items.join("・") || "塩・オリーブオイルなど";
+      const items = item.substitute_proposal.substitute_items.map(normalizeItem);
+      return items.join("・") || "塩・植物由来の油など";
     }
+
     if (item.substitute_proposal.substitute_items_en && item.substitute_proposal.substitute_items_en.length > 0) {
-      return item.substitute_proposal.substitute_items_en.join(", ");
+      const itemsEn = item.substitute_proposal.substitute_items_en.map(normalizeItemEn);
+      return itemsEn.join(", ");
     }
-    return item.substitute_proposal.substitute_items.join(", ") || "Halal Seasonings";
+
+    const fallbackItems = item.substitute_proposal.substitute_items.map(normalizeItem);
+    return fallbackItems.join(", ") || "Halal Seasonings";
   };
 
   const getSubstituteAdvice = (item?: EnhancedAnalyzeResult | null) => {
     if (!item || !item.substitute_proposal) return t.substituteDescFallback;
-    if (lang === "JP") {
-      return item.substitute_proposal.advice || t.substituteDescFallback;
-    }
-    return item.substitute_proposal.advice_en || item.substitute_proposal.advice || t.substituteDescFallback;
+    const rawAdvice =
+      lang === "JP"
+        ? item.substitute_proposal.advice || t.substituteDescFallback
+        : item.substitute_proposal.advice_en || item.substitute_proposal.advice || t.substituteDescFallback;
+
+    return rawAdvice
+      .replace(/オリーブオイル/g, "植物由来の油")
+      .replace(/olive oil/gi, "plant-based oil");
   };
 
   // 統一された多言語切り替えピルボタン

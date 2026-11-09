@@ -29,8 +29,8 @@ export interface EnhancedAnalyzeResult {
     has_substitute: boolean; // 代替調味料による提案が可能か（ラーメン等の肉エキススープ料理はfalse）
     target_ingredient: string; // 変更してもらう調味料・食材（例: "醤油", "タレ・みりん"）※簡潔な単語
     target_ingredient_en: string; // 英語（例: "Soy sauce", "Sauce / Mirin"）
-    substitute_items: string[]; // お店に常備されている安全な基本調味料（例: ["塩"], ["塩", "オリーブオイル"]）※肉類は絶対禁止
-    substitute_items_en: string[]; // 英語（例: ["Salt"], ["Salt", "Olive oil"]）
+    substitute_items: string[]; // お店に常備されている安全な基本調味料（例: ["塩"], ["塩", "植物由来の油"]）※肉類は絶対禁止
+    substitute_items_en: string[]; // 英語（例: ["Salt"], ["Salt", "Plant-based oil"]）
     advice: string; // AIからの提案理由・アドバイス
     advice_en: string; // 英語アドバイス
     staff_request_phrase: string; // 代替調味料を使った店員さん向けお願いフレーズ（簡潔に）
@@ -85,11 +85,11 @@ export async function POST(req: NextRequest) {
 4. 【最重要：代替調味料の提案（substitute_proposal）の厳格なルール】
    ★前提条件：日本の一般的な飲食店には「ハラール対応された肉（鶏肉・牛肉・羊肉など）」は一切置いていません。
    そのため、代替食材として【肉類（鶏肉・牛肉・豚肉等）】を提案することは【絶対に禁止】です。
-   ★代替提案は、日本のほぼ全ての飲食店が常備している【基本調味料（塩、胡椒、オリーブオイル、レモン等）】への変更のみを提案してください。
+   ★代替提案は、日本のほぼ全ての飲食店が常備している【基本調味料（塩、胡椒、植物由来の油、レモン等）】への変更のみを提案してください。
    【代表的な提案パターン】:
    - 醤油（アルコール発酵・微量アルコール）を避けるユーザー ➡️ target_ingredient: "醤油", substitute_items: ["塩"]
-   - みりん・料理酒・タレを使った料理（パスタ、焼き魚、グリル等） ➡️ target_ingredient: "タレ・みりん", substitute_items: ["塩", "オリーブオイル"] または ["レモン"]
-   - ドレッシングを使ったサラダ ➡️ target_ingredient: "ドレッシング", substitute_items: ["塩", "オリーブオイル"]
+   - みりん・料理酒・タレを使った料理（パスタ、焼き魚、グリル等） ➡️ target_ingredient: "タレ・みりん", substitute_items: ["塩", "植物由来の油"] または ["レモン"]
+   - ドレッシングを使ったサラダ ➡️ target_ingredient: "ドレッシング", substitute_items: ["塩", "植物由来の油"]
    - つゆを使った天ぷら ➡️ target_ingredient: "天つゆ", substitute_items: ["塩"]
    ★注意：ラーメンや豚骨鍋、肉じゃがなど、スープや煮汁全体に豚骨や肉エキスが溶け込んでいて調味料変更ではハラール化できない料理は、無理な調味料代替を提案せず has_substitute: false としてください（「スープ全体に肉エキスが溶け込んでいるため別メニューをご検討ください」と記載）。
    ★target_ingredient には、何を変更してもらうかを簡潔な調味料名1〜2語（例: "醤油", "タレ・みりん", "ドレッシング"）で指定してください。決して長文や具材の羅列（例: "豚チャーシュー・スープ（豚骨・豚脂・料理酒等）"）を書かないでください。
@@ -271,12 +271,12 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
         has_substitute: true,
         target_ingredient: "醤油・料理酒",
         target_ingredient_en: "Soy sauce & Cooking sake",
-        substitute_items: ["塩", "オリーブオイル"],
-        substitute_items_en: ["Salt", "Olive oil"],
-        advice: "醤油や料理酒の代わりにシンプルな塩とオリーブオイルで味付けしてもらえば、アルコール調味料を避けて安心・美味しく楽しめます！",
-        advice_en: "Ask to season with simple salt and olive oil instead of soy sauce or cooking sake to enjoy safely!",
-        staff_request_phrase: "すみません、宗教上の理由により、「醤油・料理酒」の代わりに「塩・オリーブオイル」で味付けして頂くことは可能でしょうか？",
-        staff_request_phrase_en: "Excuse me, for religious reasons, could you please season this with salt and olive oil instead of soy sauce and cooking sake?",
+        substitute_items: ["塩", "植物由来の油"],
+        substitute_items_en: ["Salt", "Plant-based oil"],
+        advice: "醤油や料理酒の代わりにシンプルな塩と植物由来の油で味付けしてもらえば、アルコール調味料や動物性油脂を避けて安心・美味しく楽しめます！",
+        advice_en: "Ask to season with simple salt and plant-based oil instead of soy sauce or cooking sake to enjoy safely!",
+        staff_request_phrase: "すみません、宗教上の理由により、「醤油・料理酒」の代わりに「塩・植物由来の油」で味付けして頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, for religious reasons, could you please season this with salt and plant-based oil instead of soy sauce and cooking sake?",
       },
     };
   }
