@@ -386,8 +386,40 @@ export default function HalalScanApp() {
     };
   }, [currentTab, startCamera, stopCamera]);
 
+  // 画像を軽量化・高速解析用にリサイズする関数
+  const resizeImage = (dataUrl: string, maxDim = 800): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   // 写真のキャプチャ実行
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
@@ -403,7 +435,8 @@ export default function HalalScanApp() {
 
     stopCamera();
     setCapturedImage(dataUrl);
-    runAnalysis(dataUrl);
+    const optimized = await resizeImage(dataUrl, 800);
+    runAnalysis(optimized);
   };
 
   // アルバム写真アップロード
@@ -412,11 +445,12 @@ export default function HalalScanApp() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const dataUrl = reader.result as string;
       stopCamera();
       setCapturedImage(dataUrl);
-      runAnalysis(dataUrl);
+      const optimized = await resizeImage(dataUrl, 800);
+      runAnalysis(optimized);
     };
     reader.readAsDataURL(file);
   };

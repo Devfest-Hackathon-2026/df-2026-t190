@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { UserPreferences, DEFAULT_USER_PREFERENCES } from "@/types";
 
 export interface EnhancedAnalyzeResult {
@@ -39,18 +38,17 @@ export async function POST(req: NextRequest) {
     const prefs = user_preferences || DEFAULT_USER_PREFERENCES;
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // APIキーがない、または画像が指定されていない場合のフォールバック（高品質モック）
+    // APIキーがない、またはデモ画像の場合は高品質モックを返す
     if (!apiKey || !image_data || image_data === "demo") {
       return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
 
     try {
-      const ai = new GoogleGenAI({ apiKey });
       const prompt = `
-あなたは日本の飲食店・食品のハラール成分を判定する専門家AIです。
-提供された料理/メニューの画像を分析し、ユーザーのハラール基準に照らし合わせて以下のJSONのみを出力してください。
+あなたは日本の飲食店・食品のハラール成分を画像から判定する専門家AIです。
+提供された料理/メニューの画像を注意深く分析し、正確な料理名（例: 明太子パスタ、醤油ラーメン、豚カツ、牛丼、唐揚げ定食など）を特定してください。
+特定した料理の原材料や日本の一般的な調理法を考慮し、ユーザーのハラール基準に照らし合わせて以下のJSONのみを出力してください。
 訪日外国人観光客が日本語と英語を切り替えて利用できるよう、日本語と英語（_en）の両方のフィールドを必ず提供してください。
-Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返してください。
 
 【ユーザーのハラール基準】
 - 直接アルコール成分が含まれるもの: ${prefs.alcohol_rules?.direct_alcohol || "strict"}
@@ -62,14 +60,14 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
 
 【判定基準のルール】
 - 総合判定(overall_status):
-  - ユーザー基準に違反する禁止成分（豚肉など）が含まれる場合は「danger」（要注意）
-  - 微量発酵や加熱みりんなど確認・注意を要する場合は「warning」（注意）
-  - 問題ない、または安全な食材のみの場合は「safe」（安全）
+  - ユーザー基準に反する食材（豚肉、直接アルコール等）が含まれる場合は「danger」（要注意）
+  - 微量発酵、加熱みりん・料理酒、エキス類など確認・注意を要する場合は「warning」（注意）
+  - 魚介類（明太子・鮭など）や野菜類でハラール上問題ない食材中心の場合は「safe」（安全）
 
 【必須JSONフォーマット】
 {
-  "dish_name": "料理名（例: にくじゃが、醤油ラーメン、野菜サラダ）",
-  "dish_name_en": "Dish name in English (e.g., Nikujaga, Shoyu Ramen, Vegetable Salad)",
+  "dish_name": "画像から特定した正確な料理名（例: 明太子パスタ、にくじゃが、醤油ラーメン）",
+  "dish_name_en": "Dish name in English (e.g., Mentaiko Pasta, Nikujaga, Shoyu Ramen)",
   "overall_status": "safe" | "warning" | "danger",
   "status_label": "安全" | "注意" | "要注意",
   "summary_message": "判定の理由の要約（日本語1〜2行）",
@@ -84,7 +82,7 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
       "reason_en": "Detailed reason in English"
     }
   ],
-  "concerning_ingredients": ["注意または要注意の食材リスト（日本語）。安全な場合は空配列 []"],
+  "concerning_ingredients": ["注意または要注意となった食材リスト（日本語）。安全な場合は空配列 []"],
   "concerning_ingredients_en": ["List of concerning ingredients in English. Empty array [] if safe"],
   "proposal": {
     "remove_option_text": "〇〇を抜いてこの料理を食べますか？",
@@ -99,30 +97,49 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
       let mimeType = "image/jpeg";
       if (image_data.startsWith("data:")) {
         const parts = image_data.split(";base64,");
-        mimeType = parts[0].replace("data:", "");
+        mimeType = parts[0].replace("data:", "") || "image/jpeg";
         base64Data = parts[1];
       }
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64Data,
+      // Google Gemini 公式無料枠 REST API を直接呼び出し（軽量・高速・完全無料）
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: prompt },
+                {
+                  inline_data: {
+                    mime_type: mimeType,
+                    data: base64Data,
+                  },
                 },
-              },
-            ],
+              ],
+            },
+          ],
+          generationConfig: {
+            response_mime_type: "application/json",
+            temperature: 0.1,
           },
-        ],
+        }),
       });
 
-      const text = response.text || "";
-      const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      if (!res.ok) {
+        const errBody = await res.text();
+        console.error("Gemini API Error status:", res.status, errBody);
+        throw new Error(`Gemini API error ${res.status}`);
+      }
+
+      const responseData = await res.json();
+      const rawText =
+        responseData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
       const result: EnhancedAnalyzeResult = JSON.parse(cleaned);
+
       return NextResponse.json(result);
     } catch (aiError) {
       console.warn("Gemini call fallback:", aiError);
@@ -135,6 +152,53 @@ Markdownブロック(\`\`\`json)は含めず、純粋なJSONのみを返して�
 }
 
 function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedAnalyzeResult {
+  const preset = (customPreset || "").toLowerCase();
+
+  // 明太子パスタのプリセット対応
+  if (preset.includes("pasta") || preset.includes("mentaiko") || preset.includes("明太子") || preset.includes("パスタ")) {
+    return {
+      dish_name: "明太子パスタ (Mentaiko Pasta)",
+      dish_name_en: "Mentaiko Pasta (Spicy Pollock Roe Pasta)",
+      overall_status: "warning",
+      status_label: "注意",
+      summary_message: "豚肉は不使用ですが、風味づけの料理酒・醤油、またはトッピングの調味料に微量アルコールが含まれる可能性があります。",
+      summary_message_en: "Does not contain pork meat. However, cooking sake, soy sauce, or seasonings may contain trace amounts of alcohol.",
+      checkpoints: [
+        {
+          name: "明太子・魚卵 (Pollock Roe)",
+          name_en: "Spicy Pollock Roe (Fish Roe)",
+          level: "safe",
+          level_label: "安全",
+          reason: "魚介類（タラコ・明太子）はイスラム法上ハラールであり、問題ありません。",
+          reason_en: "Fish and seafood (pollock roe) are naturally halal-friendly.",
+        },
+        {
+          name: "パスタ麺・オリーブオイル (Pasta Noodles)",
+          name_en: "Pasta Noodles & Olive Oil",
+          level: "safe",
+          level_label: "安全",
+          reason: "デュラム小麦と植物性油脂であり、ハラール基準を満たしています。",
+          reason_en: "Durum wheat semolina and plant-based oil are halal-compliant.",
+        },
+        {
+          name: "風味づけ調味料（醤油・料理酒・バター）",
+          name_en: "Seasoning (Soy Sauce, Cooking Sake & Butter)",
+          level: "warning",
+          level_label: "注意",
+          reason: "ソースの隠し味として料理酒や本醸造醤油が使われている場合があります。",
+          reason_en: "Broth or sauce may use cooking sake or brewed soy sauce with trace alcohol.",
+        },
+      ],
+      concerning_ingredients: ["隠し味の料理酒・醤油"],
+      concerning_ingredients_en: ["Cooking Sake & Soy Sauce seasoning"],
+      proposal: {
+        remove_option_text: "料理酒などの調味料を抜いてこの料理を食べますか？",
+        remove_option_text_en: "Would you like to eat this dish prepared without cooking sake/alcohol seasonings?",
+        staff_request_phrase: "すみません、宗教上の理由により、お酒やみりんなどのアルコール調味料を使わずに調理して頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, for religious reasons, could you please prepare this without cooking sake or mirin?",
+      },
+    };
+  }
   if (customPreset === "ramen") {
     return {
       dish_name: "醤油ラーメン (Shoyu Ramen)",
