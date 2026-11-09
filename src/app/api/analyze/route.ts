@@ -26,12 +26,14 @@ export interface EnhancedAnalyzeResult {
   };
   // AIによる代替食材・調味料のカスタム提案
   substitute_proposal?: {
-    has_substitute: boolean; // 代替案があるか
-    substitute_items: string[]; // お店で準備できそうな安全な食材・調味料 (例: ["塩・胡椒", "オリーブオイル"])
-    substitute_items_en: string[]; // 英語 (例: ["Salt & Pepper", "Olive Oil"])
+    has_substitute: boolean; // 代替調味料による提案が可能か（ラーメン等の肉エキススープ料理はfalse）
+    target_ingredient: string; // 変更してもらう調味料・食材（例: "醤油", "タレ・みりん"）※簡潔な単語
+    target_ingredient_en: string; // 英語（例: "Soy sauce", "Sauce / Mirin"）
+    substitute_items: string[]; // お店に常備されている安全な基本調味料（例: ["塩"], ["塩", "オリーブオイル"]）※肉類は絶対禁止
+    substitute_items_en: string[]; // 英語（例: ["Salt"], ["Salt", "Olive oil"]）
     advice: string; // AIからの提案理由・アドバイス
     advice_en: string; // 英語アドバイス
-    staff_request_phrase: string; // 代替調味料を使った店員さん向けお願いフレーズ
+    staff_request_phrase: string; // 代替調味料を使った店員さん向けお願いフレーズ（簡潔に）
     staff_request_phrase_en: string; // 英語併記
   };
 }
@@ -76,11 +78,24 @@ export async function POST(req: NextRequest) {
 もし画像内に文字やスマホ画面が写り込んでいる場合でも、文字に惑わされず【お皿や器に盛り付けられた実際の料理そのもの】を特定してください。
 
 【料理特定と原材料予測の必須タスク】
-1. 正確な料理名を特定してください（例: 明太子パスタ、醤油ラーメン、豚骨ラーメン、鶏の唐揚げ、牛丼、親子丼、天ぷらうどん、握り寿司、生姜焼き、餃子など）。
-2. その料理に含まれている・一般的な日本の調理法で使用される可能性が極めて高い原材料・調味料（目に見える具材だけでなく、隠し味の料理酒・みりん・醤油・豚脂・エキス・出汁など）を詳細に予測してください。
+1. 正確な料理名を特定してください（例: 明太子パスタ、醤油ラーメン、豚骨ラーメン、鶏の唐揚げ、牛丼、天ぷらうどん、握り寿司、生姜焼きなど）。
+2. その料理に含まれている・一般的な日本の調理法で使用される原材料・調味料（隠し味の料理酒・みりん・醤油・豚脂・エキス・出汁など）を詳細に予測してください。
 3. ユーザーのハラール基準に照らし合わせ、各原材料ごとに「安全」「注意」「要注意」の判定と理由を記載してください。
-4. 【最重要：代替食材・調味料の提案（substitute_proposal）】
-   もし注意・要注意（アルコール、みりん、醤油、豚肉等）がある場合、ユーザーが食べられそうで、日本の一般的な飲食店で別途準備・代替してもらえそうな食材や調味料（例: 塩、胡椒、オリーブオイル、レモン、刻みネギ、ポン酢、別添えなど）をAIが考案してください。
+
+4. 【最重要：代替調味料の提案（substitute_proposal）の厳格なルール】
+   ★前提条件：日本の一般的な飲食店には「ハラール対応された肉（鶏肉・牛肉・羊肉など）」は一切置いていません。
+   そのため、代替食材として【肉類（鶏肉・牛肉・豚肉等）】を提案することは【絶対に禁止】です。
+   ★代替提案は、日本のほぼ全ての飲食店が常備している【基本調味料（塩、胡椒、オリーブオイル、レモン等）】への変更のみを提案してください。
+   【代表的な提案パターン】:
+   - 醤油（アルコール発酵・微量アルコール）を避けるユーザー ➡️ target_ingredient: "醤油", substitute_items: ["塩"]
+   - みりん・料理酒・タレを使った料理（パスタ、焼き魚、グリル等） ➡️ target_ingredient: "タレ・みりん", substitute_items: ["塩", "オリーブオイル"] または ["レモン"]
+   - ドレッシングを使ったサラダ ➡️ target_ingredient: "ドレッシング", substitute_items: ["塩", "オリーブオイル"]
+   - つゆを使った天ぷら ➡️ target_ingredient: "天つゆ", substitute_items: ["塩"]
+   ★注意：ラーメンや豚骨鍋、肉じゃがなど、スープや煮汁全体に豚骨や肉エキスが溶け込んでいて調味料変更ではハラール化できない料理は、無理な調味料代替を提案せず has_substitute: false としてください（「スープ全体に肉エキスが溶け込んでいるため別メニューをご検討ください」と記載）。
+   ★target_ingredient には、何を変更してもらうかを簡潔な調味料名1〜2語（例: "醤油", "タレ・みりん", "ドレッシング"）で指定してください。決して長文や具材の羅列（例: "豚チャーシュー・スープ（豚骨・豚脂・料理酒等）"）を書かないでください。
+   ★店員さん向け指差し文（staff_request_phrase）は店員さんが一瞬で判断できるよう短く簡潔にしてください。
+   例: 「すみません、宗教上の理由により、「醤油」の代わりに「塩」で味付け・調理して頂くことは可能でしょうか？」
+
 5. 訪日外国人観光客向けに日本語と英語（_en）を必ず完全提供してください。
 
 【ユーザーのハラール基準】
@@ -107,7 +122,7 @@ export async function POST(req: NextRequest) {
   "summary_message_en": "Summary of analysis in English (1-2 sentences)",
   "checkpoints": [
     {
-      "name": "食材・原材料名（日本語）",
+      "name": "食材・原材料名（日本語・簡潔に）",
       "name_en": "Ingredient name in English",
       "level": "safe" | "warning" | "danger",
       "level_label": "安全" | "注意" | "要注意",
@@ -115,8 +130,8 @@ export async function POST(req: NextRequest) {
       "reason_en": "Detailed reason in English"
     }
   ],
-  "concerning_ingredients": ["注意または要注意となった食材・調味料のリスト（日本語）。安全な場合は空配列 []"],
-  "concerning_ingredients_en": ["List of concerning ingredients in English. Empty array [] if safe"],
+  "concerning_ingredients": ["注意・要注意となった食材・調味料の簡潔な単語リスト（例: [\"豚骨スープ\", \"豚肉\", \"醤油\"]。括弧書きや説明文は含めず名詞のみ）"],
+  "concerning_ingredients_en": ["List of concerning ingredients in English (e.g., [\"Pork Broth\", \"Pork Meat\", \"Soy Sauce\"])"],
   "proposal": {
     "remove_option_text": "〇〇を抜いてこの料理を食べますか？",
     "remove_option_text_en": "Would you like to eat this dish without [ingredients]?",
@@ -125,12 +140,14 @@ export async function POST(req: NextRequest) {
   },
   "substitute_proposal": {
     "has_substitute": true,
-    "substitute_items": ["塩・ブラックペッパー", "オリーブオイル"],
-    "substitute_items_en": ["Salt & Pepper", "Olive Oil"],
-    "advice": "お店にある塩とオリーブオイルでシンプルに調理してもらえば、隠し味のお酒を避けて安全・美味しく楽しめます！",
-    "advice_en": "Ask to season with simple salt and olive oil instead of alcohol seasonings to enjoy safely!",
-    "staff_request_phrase": "すみません、宗教上の理由により、お酒などの調味料を使わずに【塩とオリーブオイル】で味付けして頂くことは可能でしょうか？",
-    "staff_request_phrase_en": "Excuse me, for religious reasons, could you please cook this using salt and olive oil instead of alcohol seasonings?"
+    "target_ingredient": "醤油",
+    "target_ingredient_en": "Soy sauce",
+    "substitute_items": ["塩"],
+    "substitute_items_en": ["Salt"],
+    "advice": "お醤油の代わりにシンプルな塩で味付けしてもらえば、アルコール発酵調味料を避けて安心してお召し上がりいただけます！",
+    "advice_en": "Ask to season with simple salt instead of soy sauce to enjoy safely!",
+    "staff_request_phrase": "すみません、宗教上の理由により、「醤油」の代わりに「塩」で味付けして頂くことは可能でしょうか？",
+    "staff_request_phrase_en": "Excuse me, for religious reasons, could you please season this with salt instead of soy sauce?"
   }
 }
 `;
@@ -252,12 +269,14 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
       },
       substitute_proposal: {
         has_substitute: true,
-        substitute_items: ["塩・ブラックペッパー", "オリーブオイル"],
-        substitute_items_en: ["Salt & Pepper", "Olive Oil"],
-        advice: "お店にある塩とオリーブオイルでシンプルに味付けしてもらえば、隠し味のお酒を避けて美味しく楽しめます！",
-        advice_en: "Ask to season with simple salt and olive oil instead of alcohol seasonings to enjoy safely!",
-        staff_request_phrase: "すみません、宗教上の理由により、お酒などの調味料を使わずに【塩とオリーブオイル】で味付けして頂くことは可能でしょうか？",
-        staff_request_phrase_en: "Excuse me, for religious reasons, could you please cook this using salt and olive oil instead of alcohol seasonings?",
+        target_ingredient: "醤油・料理酒",
+        target_ingredient_en: "Soy sauce & Cooking sake",
+        substitute_items: ["塩", "オリーブオイル"],
+        substitute_items_en: ["Salt", "Olive oil"],
+        advice: "醤油や料理酒の代わりにシンプルな塩とオリーブオイルで味付けしてもらえば、アルコール調味料を避けて安心・美味しく楽しめます！",
+        advice_en: "Ask to season with simple salt and olive oil instead of soy sauce or cooking sake to enjoy safely!",
+        staff_request_phrase: "すみません、宗教上の理由により、「醤油・料理酒」の代わりに「塩・オリーブオイル」で味付けして頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, for religious reasons, could you please season this with salt and olive oil instead of soy sauce and cooking sake?",
       },
     };
   }
@@ -281,10 +300,10 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
         {
           name: "ラーメンスープ (Broth & Sauce)",
           name_en: "Ramen Broth (Pork & Soy Sauce Base)",
-          level: "warning",
-          level_label: "注意",
-          reason: "スープの出汁に豚骨エキスやみりんが溶け込んでおり、完全分離は困難です。",
-          reason_en: "Broth contains pork bone extract and mirin; separation is not possible once cooked.",
+          level: "danger",
+          level_label: "要注意",
+          reason: "スープの出汁に豚骨エキスやみりんが溶け込んでおり、調味料の変更では対応が困難です。",
+          reason_en: "Broth contains pork bone extract and mirin; seasoning substitution cannot make it halal.",
         },
         {
           name: "麺・ネギ・煮卵 (Noodles & Toppings)",
@@ -304,13 +323,15 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
         staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without chashu pork?",
       },
       substitute_proposal: {
-        has_substitute: true,
-        substitute_items: ["煮卵・メンマ増量", "ごま油・塩"],
-        substitute_items_en: ["Extra Boiled Egg & Bamboo Shoots", "Sesame Oil & Salt"],
-        advice: "チャーシューの代わりに煮卵や野菜を増やし、ごま油と塩でシンプルにいただく相談が可能です。",
-        advice_en: "You can ask for extra eggs and vegetables seasoned with sesame oil and salt instead of pork chashu.",
-        staff_request_phrase: "すみません、豚肉の代わりに【煮卵や野菜】をトッピングして頂くことは可能でしょうか？",
-        staff_request_phrase_en: "Excuse me, could you please substitute pork chashu with extra boiled egg or vegetables?",
+        has_substitute: false,
+        target_ingredient: "豚骨スープ",
+        target_ingredient_en: "Pork Broth",
+        substitute_items: [],
+        substitute_items_en: [],
+        advice: "ラーメンはスープ全体に豚骨エキスが溶け込んでいるため、調味料の変更では対応が困難です。別メニューのご検討をおすすめします。",
+        advice_en: "Since the broth contains pork bone extract, seasoning substitution cannot make it halal. Finding another dish is recommended.",
+        staff_request_phrase: "すみません、豚肉や豚骨スープを使っていないメニューはありますか？",
+        staff_request_phrase_en: "Excuse me, do you have any dishes without pork meat or pork broth?",
       },
     };
   }
@@ -358,10 +379,12 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
       staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without pork?",
     },
     substitute_proposal: {
-      has_substitute: true,
-      substitute_items: ["塩・醤油なし茹で野菜"],
-      substitute_items_en: ["Steamed Vegetables with Salt"],
-      advice: "豚の出汁が煮汁全体に溶け出しているため、具材抜き調理が難しい場合は別のお料理をご検討ください。",
+      has_substitute: false,
+      target_ingredient: "豚肉・煮汁",
+      target_ingredient_en: "Pork Meat & Broth",
+      substitute_items: [],
+      substitute_items_en: [],
+      advice: "豚の出汁が煮汁全体に溶け出しているため、調味料の変更では対応が困難です。別のお料理をご検討ください。",
       advice_en: "Since pork broth permeates the whole dish, finding another menu item is recommended.",
       staff_request_phrase: "すみません、豚肉や豚出汁を使っていない別のお料理はありますか？",
       staff_request_phrase_en: "Excuse me, do you have any dishes without pork meat or pork broth?",

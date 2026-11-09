@@ -670,21 +670,80 @@ export default function HalalScanApp() {
     return reason;
   };
 
-  const getConcerningIngredientsText = (item?: EnhancedAnalyzeResult | null) => {
+  // 括弧書きや長文説明を取り除くクリーンアップヘルパー
+  const cleanIngredientName = (name: string): string => {
+    return name
+      .replace(/（[^）]*）/g, "")
+      .replace(/\([^)]*\)/g, "")
+      .trim();
+  };
+
+  // 調味料代替交渉用の「変更元の調味料・食材名」を取得（例: "醤油", "みりん・料理酒", "タレ"）
+  const getTargetIngredientText = (item?: EnhancedAnalyzeResult | null, targetLang?: "JP" | "EN"): string => {
     if (!item) return "";
-    if (lang === "JP") {
-      return item.concerning_ingredients.join("・") || "該当の食材";
+    const activeLang = targetLang || lang;
+
+    // AIが明示的に target_ingredient を返している場合
+    if (item.substitute_proposal?.target_ingredient) {
+      if (activeLang === "EN" && item.substitute_proposal.target_ingredient_en) {
+        return item.substitute_proposal.target_ingredient_en;
+      }
+      return item.substitute_proposal.target_ingredient;
     }
+
+    // ない場合: concerning_ingredients から調味料系を優先抽出
+    const seasonKeywords = ["醤油", "みりん", "酒", "タレ", "ドレッシング", "ソース", "つゆ", "スープ"];
+    const matched = item.concerning_ingredients.filter((ing) =>
+      seasonKeywords.some((kw) => ing.includes(kw))
+    );
+    const targetList = matched.length > 0 ? matched : item.concerning_ingredients;
+    const cleaned = targetList.slice(0, 2).map(cleanIngredientName).filter(Boolean);
+
+    if (activeLang === "JP") {
+      return cleaned.join("・") || "該当の調味料";
+    }
+
+    const enMapped = cleaned.map((ing) => {
+      if (ing.includes("醤油")) return "Soy sauce";
+      if (ing.includes("みりん") || ing.includes("酒")) return "Mirin / Cooking sake";
+      if (ing.includes("タレ") || ing.includes("つゆ")) return "Sauce / Broth";
+      if (ing.includes("ドレッシング")) return "Dressing";
+      if (ing.includes("豚")) return "Pork seasoning";
+      return ing;
+    });
+    return enMapped.join(", ") || "these seasonings";
+  };
+
+  // 食材抜き交渉用の簡潔な食材リスト（長文や括弧を除去して最大2〜3品）
+  const getConciseConcerningIngredientsText = (item?: EnhancedAnalyzeResult | null, targetLang?: "JP" | "EN"): string => {
+    if (!item) return "";
+    const activeLang = targetLang || lang;
+
+    const cleaned = item.concerning_ingredients
+      .slice(0, 3)
+      .map(cleanIngredientName)
+      .filter(Boolean);
+
+    if (activeLang === "JP") {
+      return cleaned.join("・") || "該当の食材";
+    }
+
     if (item.concerning_ingredients_en && item.concerning_ingredients_en.length > 0) {
-      return item.concerning_ingredients_en.join(", ");
+      return item.concerning_ingredients_en.slice(0, 3).map(cleanIngredientName).join(", ");
     }
-    const enMapped = item.concerning_ingredients.map((ing) => {
-      if (ing.includes("豚") || ing.includes("ぶた")) return "Pork Meat";
-      if (ing.includes("みりん") || ing.includes("酒")) return "Cooked Mirin";
+
+    const enMapped = cleaned.map((ing) => {
+      if (ing.includes("豚") || ing.includes("ぶた")) return "Pork";
+      if (ing.includes("みりん") || ing.includes("酒")) return "Cooking sake/Mirin";
       if (ing.includes("スープ")) return "Pork Broth";
+      if (ing.includes("醤油")) return "Soy sauce";
       return ing;
     });
     return enMapped.join(", ") || "these ingredients";
+  };
+
+  const getConcerningIngredientsText = (item?: EnhancedAnalyzeResult | null) => {
+    return getConciseConcerningIngredientsText(item);
   };
 
   const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null) => {
@@ -806,13 +865,13 @@ export default function HalalScanApp() {
                   <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
                     「
                     <span className="line-through decoration-rose-300/80 decoration-2 opacity-90">
-                      {analysisResult.concerning_ingredients.join("・") || "該当の調味料"}
+                      {getTargetIngredientText(analysisResult)}
                     </span>
                     」の代わりに、
                     <br />
                     「
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4 font-black text-amber-200">
-                      {analysisResult.substitute_proposal.substitute_items.join("・")}
+                      {getSubstituteItemsText(analysisResult)}
                     </span>
                     」で味付け・調理して頂くことは可能でしょうか？
                   </p>
@@ -825,7 +884,7 @@ export default function HalalScanApp() {
                       </span>{" "}
                       instead of{" "}
                       <span className="line-through opacity-80">
-                        {getConcerningIngredientsText(analysisResult)}
+                        {getTargetIngredientText(analysisResult, "EN")}
                       </span>
                       ?)
                     </p>
@@ -836,7 +895,7 @@ export default function HalalScanApp() {
                   <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
                     「
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
-                      {analysisResult.concerning_ingredients.join("・") || "該当の食材"}
+                      {getConciseConcerningIngredientsText(analysisResult)}
                     </span>
                     」を使わずに調理して頂くことは可能でしょうか？
                   </p>
@@ -845,7 +904,7 @@ export default function HalalScanApp() {
                     <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
                       (Could you please prepare this dish without{" "}
                       <span className="font-bold underline">
-                        {getConcerningIngredientsText(analysisResult)}
+                        {getConciseConcerningIngredientsText(analysisResult, "EN")}
                       </span>
                       ?)
                     </p>
@@ -1373,41 +1432,43 @@ export default function HalalScanApp() {
                 {/* 注意・要注意の食材がある場合: ユーザーが選べる2つのボタンを表示 */}
                 {analysisResult.concerning_ingredients.length > 0 ? (
                   <div className="space-y-3">
-                    {/* ボタン1: AIからの提案を選択 */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setStaffCardMode("substitute");
-                        setIsFullscreenStaffView(true);
-                      }}
-                      className="w-full p-4 rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-amber-300/40"
-                    >
-                      <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
-                        <Sparkles className="w-5 h-5 text-amber-100" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
-                            {t.substituteOptionBadge}
-                          </span>
-                          <span className="text-[9px] font-bold text-amber-100 bg-black/25 px-1.5 py-0.5 rounded-full">
-                            {t.recommendedBadge}
-                          </span>
+                    {/* ボタン1: AIからの提案（代替調味料への変更）※調味料代替が可能な場合 */}
+                    {analysisResult.substitute_proposal?.has_substitute && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStaffCardMode("substitute");
+                          setIsFullscreenStaffView(true);
+                        }}
+                        className="w-full p-4 rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-amber-300/40"
+                      >
+                        <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
+                          <Sparkles className="w-5 h-5 text-amber-100" />
                         </div>
-                        <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
-                          {t.substituteActionPrefix}
-                          {getSubstituteItemsText(analysisResult)}
-                          {t.substituteActionSuffix}
-                        </h4>
-                        <p className="text-[11px] text-amber-100/95 mt-1 leading-relaxed break-words">
-                          {getSubstituteAdvice(analysisResult)}
-                        </p>
-                        <p className="text-[10px] font-bold text-amber-200 mt-2 flex items-center gap-1">
-                          <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
-                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                        </p>
-                      </div>
-                    </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                              {t.substituteOptionBadge}
+                            </span>
+                            <span className="text-[9px] font-bold text-amber-100 bg-black/25 px-1.5 py-0.5 rounded-full">
+                              {t.recommendedBadge}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
+                            {lang === "JP"
+                              ? `「${getTargetIngredientText(analysisResult)}」の代わりに【${getSubstituteItemsText(analysisResult)}】で味付けしてもらう`
+                              : `Substitute [${getTargetIngredientText(analysisResult, "EN")}] with [${getSubstituteItemsText(analysisResult)}]`}
+                          </h4>
+                          <p className="text-[11px] text-amber-100/95 mt-1 leading-relaxed break-words">
+                            {getSubstituteAdvice(analysisResult)}
+                          </p>
+                          <p className="text-[10px] font-bold text-amber-200 mt-2 flex items-center gap-1">
+                            <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
+                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </p>
+                        </div>
+                      </button>
+                    )}
 
                     {/* ボタン2: （食べられない食べ物）を抜いてこの料理を食べる */}
                     <button
@@ -1429,8 +1490,8 @@ export default function HalalScanApp() {
                         </div>
                         <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
                           {lang === "JP"
-                            ? `「${analysisResult.concerning_ingredients.join("・")}」を抜いてこの料理を食べる`
-                            : `Eat this dish without ${getConcerningIngredientsText(analysisResult)}`}
+                            ? `「${getConciseConcerningIngredientsText(analysisResult)}」を抜いてこの料理を食べる`
+                            : `Eat this dish without ${getConciseConcerningIngredientsText(analysisResult, "EN")}`}
                         </h4>
                         <p className="text-[11px] text-white/90 mt-1 leading-relaxed break-words">
                           {t.option1Desc}
@@ -1441,6 +1502,33 @@ export default function HalalScanApp() {
                         </p>
                       </div>
                     </button>
+
+                    {/* 調味料代替ができない料理（ラーメンなど）の場合、カメラに戻る選択肢を表示 */}
+                    {!analysisResult.substitute_proposal?.has_substitute && (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentTab("camera")}
+                        className="w-full p-4 rounded-3xl bg-white border border-slate-200 text-slate-700 shadow-xs hover:bg-slate-50 transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-600">
+                            <RotateCcw className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                              {t.option2Badge}
+                            </span>
+                            <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
+                              {t.option2Action}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              {t.option2Desc}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-400" />
+                      </button>
+                    )}
                   </div>
                 ) : (
                   /* 安全な場合 */
@@ -1526,9 +1614,9 @@ export default function HalalScanApp() {
                           </span>
                         </div>
                         <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
-                          {t.substituteActionPrefix}
-                          {getSubstituteItemsText(analysisResult)}
-                          {t.substituteActionSuffix}
+                          {lang === "JP"
+                            ? `「${getTargetIngredientText(analysisResult)}」の代わりに【${getSubstituteItemsText(analysisResult)}】で味付けしてもらう`
+                            : `Substitute [${getTargetIngredientText(analysisResult, "EN")}] with [${getSubstituteItemsText(analysisResult)}]`}
                         </h3>
                         <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
                           {getSubstituteAdvice(analysisResult)}
@@ -1560,8 +1648,8 @@ export default function HalalScanApp() {
                         </span>
                         <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
                           {lang === "JP"
-                            ? `「${analysisResult.concerning_ingredients.join("・")}」を抜いてこの料理を食べる`
-                            : `Eat this dish without ${getConcerningIngredientsText(analysisResult)}`}
+                            ? `「${getConciseConcerningIngredientsText(analysisResult)}」を抜いてこの料理を食べる`
+                            : `Eat this dish without ${getConciseConcerningIngredientsText(analysisResult, "EN")}`}
                         </h3>
                         <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">{t.option1Desc}</p>
                         <p className="text-[10px] font-bold text-[#24C27A] mt-2 flex items-center gap-1">
@@ -1592,12 +1680,12 @@ export default function HalalScanApp() {
 
                   <div className="space-y-1 text-center py-1">
                     <p className="text-base font-black text-slate-900 leading-snug">
-                      「{analysisResult.concerning_ingredients.join("・")}を使わずに調理して頂くことは可能でしょうか？」
+                      「{getConciseConcerningIngredientsText(analysisResult)}を使わずに調理して頂くことは可能でしょうか？」
                     </p>
                     {lang === "EN" && (
                       <p className="text-[11px] text-slate-500">
                         (Could you please prepare this dish without{" "}
-                        {getConcerningIngredientsText(analysisResult)}?)
+                        {getConciseConcerningIngredientsText(analysisResult, "EN")}?)
                       </p>
                     )}
                   </div>
