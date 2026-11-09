@@ -28,6 +28,7 @@ import {
   Save,
   FileText,
   SwitchCamera,
+  Sparkles,
 } from "lucide-react";
 import { EnhancedAnalyzeResult } from "./api/analyze/route";
 import { ToleranceLevel } from "@/types";
@@ -105,13 +106,17 @@ const translations = {
     proposalBadge: "Suggestion for You",
     proposalWarningTitle: "このメニューはそのままでは難しい可能性があります",
     proposalSafeTitle: "このメニューは安心してお召し上がりいただけます！",
-    proposalWarningDesc: "以下の2つの選択肢から選ぶことができます。",
+    proposalWarningDesc: "以下の選択肢から選ぶことができます。",
     proposalSafeDesc: "楽しい日本での食事をお楽しみください。",
-    option1Badge: "選択肢 1",
+    substituteOptionBadge: "AI特別提案",
+    substituteActionPrefix: "代わりに【",
+    substituteActionSuffix: "】で味付け・調理してもらう",
+    substituteDescFallback: "お店で準備してもらいやすい安全な食材・調味料に変更して美味しく楽しめます。",
+    option1Badge: "選択肢 A",
     option1Action: "を抜いて、この料理を食べる",
     option1Desc:
       "店員さん向けの指差しカードを表示して、食材を除いて調理してもらえるか確認します。",
-    option2Badge: "選択肢 2",
+    option2Badge: "選択肢 B",
     recommendedBadge: "おすすめ",
     option2Action: "他の食べ物を見る（カメラに戻る）",
     option2Desc: "カメラ画面に戻り、別の料理やメニューを撮影して判定します。",
@@ -216,13 +221,17 @@ const translations = {
     proposalBadge: "Suggestion for You",
     proposalWarningTitle: "This menu might be difficult to eat as-is",
     proposalSafeTitle: "You can enjoy this dish with confidence!",
-    proposalWarningDesc: "You can choose from the two options below.",
+    proposalWarningDesc: "You can choose from the options below.",
     proposalSafeDesc: "Have a wonderful dining experience in Japan.",
-    option1Badge: "Option 1",
+    substituteOptionBadge: "AI Recommendation",
+    substituteActionPrefix: "Substitute with [",
+    substituteActionSuffix: "] instead",
+    substituteDescFallback: "Enjoy safely by asking the restaurant to use available halal seasonings.",
+    option1Badge: "Option A",
     option1Action: "Eat this dish without ",
     option1Desc:
       "Open the staff communication card to ask if they can prepare it without these ingredients.",
-    option2Badge: "Option 2",
+    option2Badge: "Option B",
     recommendedBadge: "Recommended",
     option2Action: "Find other dishes (Return to Camera)",
     option2Desc: "Return to camera and scan another dish or menu.",
@@ -306,6 +315,7 @@ export default function HalalScanApp() {
   const [isShowingStaffCard, setIsShowingStaffCard] = useState(false);
   const [staffResponse, setStaffResponse] = useState<"yes" | "no" | null>(null);
   const [isFullscreenStaffView, setIsFullscreenStaffView] = useState(false);
+  const [staffCardMode, setStaffCardMode] = useState<"substitute" | "remove">("substitute");
 
   // カメラ停止処理
   const stopCamera = useCallback(() => {
@@ -512,61 +522,13 @@ export default function HalalScanApp() {
       setAnalysisResult(result);
       setCurrentTab("result");
     } catch (err) {
-      console.warn("Analysis fallback:", err);
-      // フォールバック結果
-      setAnalysisResult({
-        dish_name: "にくじゃが (Nikujaga)",
-        dish_name_en: "Nikujaga (Simmered Beef/Pork & Potato)",
-        overall_status: porkPolicy === "strict" ? "danger" : "warning",
-        status_label: porkPolicy === "strict" ? "要注意" : "注意",
-        summary_message:
-          "豚肉が含まれており、煮汁に加熱みりん・料理酒が使われている可能性があります。",
-        summary_message_en:
-          "Contains pork meat, and the broth likely contains cooked mirin and cooking sake.",
-        checkpoints: [
-          {
-            name: "ぶた肉 (Pork Meat)",
-            name_en: "Pork Meat & Essence",
-            level: porkPolicy === "strict" ? "danger" : "safe",
-            level_label: porkPolicy === "strict" ? "要注意" : "安全",
-            reason:
-              "具材に豚バラスライスが使用されており、豚の出汁が煮汁全体に溶け出しています。",
-            reason_en:
-              "Sliced pork belly is used, and pork essence is extracted into the simmering broth.",
-          },
-          {
-            name: "加熱みりん・料理酒 (Cooked Mirin)",
-            name_en: "Cooked Mirin & Cooking Sake",
-            level: alcoholCooked === "strict" ? "warning" : "safe",
-            level_label: alcoholCooked === "strict" ? "注意" : "安全",
-            reason:
-              "煮込み調理時にアルコールは大部分揮発していますが、調味料由来の微量残存の可能性があります。",
-            reason_en:
-              "Most alcohol evaporates during simmering, but trace residue from seasonings may remain.",
-          },
-          {
-            name: "じゃがいも・人参・玉ねぎ (Vegetables)",
-            name_en: "Potatoes, Carrots, Onions",
-            level: "safe",
-            level_label: "安全",
-            reason:
-              "100%植物性食材であり、ハラール上全く問題ありません。",
-            reason_en:
-              "100% plant-based ingredients and completely halal.",
-          },
-        ],
-        concerning_ingredients: ["ぶた肉", "加熱みりん"],
-        concerning_ingredients_en: ["Pork Meat", "Cooked Mirin"],
-        proposal: {
-          remove_option_text: "ぶた肉を抜いてこの料理を食べますか？",
-          remove_option_text_en: "Would you like to eat this dish without pork?",
-          staff_request_phrase:
-            "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
-          staff_request_phrase_en:
-            "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without pork?",
-        },
-      });
-      setCurrentTab("result");
+      console.error("AI Analysis failed:", err);
+      alert(
+        lang === "JP"
+          ? "AI通信が一時的に混み合っています。恐れ入りますが、もう一度撮影してください。"
+          : "Temporary AI connection issue. Please snap the photo again."
+      );
+      setCurrentTab("camera");
     }
   };
 
@@ -714,6 +676,25 @@ export default function HalalScanApp() {
     return enMapped.join(", ") || "these ingredients";
   };
 
+  const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null) => {
+    if (!item || !item.substitute_proposal) return "";
+    if (lang === "JP") {
+      return item.substitute_proposal.substitute_items.join("・") || "塩・オリーブオイルなど";
+    }
+    if (item.substitute_proposal.substitute_items_en && item.substitute_proposal.substitute_items_en.length > 0) {
+      return item.substitute_proposal.substitute_items_en.join(", ");
+    }
+    return item.substitute_proposal.substitute_items.join(", ") || "Halal Seasonings";
+  };
+
+  const getSubstituteAdvice = (item?: EnhancedAnalyzeResult | null) => {
+    if (!item || !item.substitute_proposal) return t.substituteDescFallback;
+    if (lang === "JP") {
+      return item.substitute_proposal.advice || t.substituteDescFallback;
+    }
+    return item.substitute_proposal.advice_en || item.substitute_proposal.advice || t.substituteDescFallback;
+  };
+
   // 統一された多言語切り替えピルボタン
   const LanguageToggle = ({ light = false }: { light?: boolean }) => (
     <button
@@ -771,6 +752,34 @@ export default function HalalScanApp() {
               </div>
             </div>
 
+            {/* 代替提案がある場合、カード上部でワンタップ切り替え可能 */}
+            {analysisResult.substitute_proposal?.has_substitute && (
+              <div className="flex bg-black/15 p-1 rounded-2xl backdrop-blur-md mt-2">
+                <button
+                  type="button"
+                  onClick={() => setStaffCardMode("substitute")}
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    staffCardMode === "substitute"
+                      ? "bg-white text-[#24C27A] shadow-sm"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  ✨ {lang === "JP" ? "代替調味料でお願い" : "With Substitute"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStaffCardMode("remove")}
+                  className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    staffCardMode === "remove"
+                      ? "bg-white text-[#24C27A] shadow-sm"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {lang === "JP" ? "食材を抜いてお願い" : "Without Ingredients"}
+                </button>
+              </div>
+            )}
+
             {/* 店員さん向け特大フレーズ (JPモードは日本語のみ、ENモードは日英対訳) */}
             <div className="my-auto space-y-5 text-center bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 shadow-xl">
               <div className="space-y-1">
@@ -780,24 +789,57 @@ export default function HalalScanApp() {
                 <p className="text-base text-white/95 font-medium">すみません、宗教上の理由により、</p>
               </div>
 
-              {/* メイン質問文 */}
-              <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
-                「
-                <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
-                  {analysisResult.concerning_ingredients.join("・") || "該当の食材"}
-                </span>
-                」を使わずに調理して頂くことは可能でしょうか？
-              </p>
+              {/* メイン質問文: 代替調味料モードか、食材抜きモードかで切り替え */}
+              {staffCardMode === "substitute" && analysisResult.substitute_proposal?.has_substitute ? (
+                <>
+                  <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
+                    「
+                    <span className="line-through decoration-rose-300/80 decoration-2 opacity-90">
+                      {analysisResult.concerning_ingredients.join("・") || "該当の調味料"}
+                    </span>
+                    」の代わりに、
+                    <br />
+                    「
+                    <span className="underline decoration-amber-300 decoration-4 underline-offset-4 font-black text-amber-200">
+                      {analysisResult.substitute_proposal.substitute_items.join("・")}
+                    </span>
+                    」で味付け・調理して頂くことは可能でしょうか？
+                  </p>
 
-              {/* ENモードのときのみ、英語話者向けの意味解説を表示 (JPモードでは混在させない) */}
-              {lang === "EN" && (
-                <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
-                  (Could you please prepare this dish without{" "}
-                  <span className="font-bold underline">
-                    {getConcerningIngredientsText(analysisResult)}
-                  </span>
-                  ?)
-                </p>
+                  {lang === "EN" && (
+                    <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
+                      (Could you please season/prepare this with{" "}
+                      <span className="font-bold underline text-amber-200">
+                        {getSubstituteItemsText(analysisResult)}
+                      </span>{" "}
+                      instead of{" "}
+                      <span className="line-through opacity-80">
+                        {getConcerningIngredientsText(analysisResult)}
+                      </span>
+                      ?)
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
+                    「
+                    <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
+                      {analysisResult.concerning_ingredients.join("・") || "該当の食材"}
+                    </span>
+                    」を使わずに調理して頂くことは可能でしょうか？
+                  </p>
+
+                  {lang === "EN" && (
+                    <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
+                      (Could you please prepare this dish without{" "}
+                      <span className="font-bold underline">
+                        {getConcerningIngredientsText(analysisResult)}
+                      </span>
+                      ?)
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
@@ -1318,10 +1360,50 @@ export default function HalalScanApp() {
                 {/* 注意・要注意の食材がある場合 */}
                 {analysisResult.concerning_ingredients.length > 0 ? (
                   <div className="space-y-2.5">
+                    {/* 【✨ AI特別提案】お店にある代替食材・調味料で調理してもらう提案 */}
+                    {analysisResult.substitute_proposal?.has_substitute && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStaffCardMode("substitute");
+                          setIsFullscreenStaffView(true);
+                        }}
+                        className="w-full p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer group border-2 border-amber-300/40"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                            <Sparkles className="w-5 h-5 text-white animate-pulse" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/15 px-2 py-0.5 rounded-full">
+                                {t.substituteOptionBadge}
+                              </span>
+                              <span className="text-[9px] font-bold text-amber-100 bg-black/20 px-1.5 py-0.5 rounded-full">
+                                {t.recommendedBadge}
+                              </span>
+                            </div>
+                            <h4 className="text-xs sm:text-sm font-black leading-tight mt-1 truncate">
+                              {t.substituteActionPrefix}
+                              {getSubstituteItemsText(analysisResult)}
+                              {t.substituteActionSuffix}
+                            </h4>
+                            <p className="text-[10px] text-amber-100/90 mt-0.5 line-clamp-1">
+                              {getSubstituteAdvice(analysisResult)}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-white/80 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      </button>
+                    )}
+
                     {/* 提案1: 該当食材を抜いて食べる（店員指差しカードを開く） */}
                     <button
                       type="button"
-                      onClick={() => setIsFullscreenStaffView(true)}
+                      onClick={() => {
+                        setStaffCardMode("remove");
+                        setIsFullscreenStaffView(true);
+                      }}
                       className="w-full p-4 rounded-3xl bg-gradient-to-r from-[#24C27A] to-[#1EA866] text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer group"
                     >
                       <div className="flex items-center gap-3">
@@ -1431,12 +1513,50 @@ export default function HalalScanApp() {
                 </p>
               </div>
 
-              {/* 2つの主要な選択肢 */}
+              {/* 主要な選択肢 */}
               <div className="space-y-3">
+                {/* AI特別提案: 代替調味料・食材で調理 */}
+                {analysisResult.substitute_proposal?.has_substitute && (
+                  <div
+                    onClick={() => {
+                      setStaffCardMode("substitute");
+                      setIsFullscreenStaffView(true);
+                    }}
+                    className="rounded-3xl p-5 border-2 border-amber-300 bg-amber-50/50 hover:border-amber-500 transition-all cursor-pointer shadow-sm active:scale-98"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
+                            {t.substituteOptionBadge}
+                          </span>
+                          <span className="text-[9px] font-bold text-amber-700">
+                            {t.recommendedBadge}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1">
+                          {t.substituteActionPrefix}
+                          {getSubstituteItemsText(analysisResult)}
+                          {t.substituteActionSuffix}
+                        </h3>
+                        <p className="text-[11px] text-slate-600 mt-1">
+                          {getSubstituteAdvice(analysisResult)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* 選択肢1: 食材を抜いて食べる (全画面店員指差しカードを開く) */}
                 {analysisResult.concerning_ingredients.length > 0 && (
                   <div
-                    onClick={() => setIsFullscreenStaffView(true)}
+                    onClick={() => {
+                      setStaffCardMode("remove");
+                      setIsFullscreenStaffView(true);
+                    }}
                     className="rounded-3xl p-5 border-2 border-slate-200 bg-white hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     <div className="flex items-start gap-3">

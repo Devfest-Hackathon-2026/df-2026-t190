@@ -24,6 +24,16 @@ export interface EnhancedAnalyzeResult {
     staff_request_phrase: string;
     staff_request_phrase_en?: string;
   };
+  // AIによる代替食材・調味料のカスタム提案
+  substitute_proposal?: {
+    has_substitute: boolean; // 代替案があるか
+    substitute_items: string[]; // お店で準備できそうな安全な食材・調味料 (例: ["塩・胡椒", "オリーブオイル"])
+    substitute_items_en: string[]; // 英語 (例: ["Salt & Pepper", "Olive Oil"])
+    advice: string; // AIからの提案理由・アドバイス
+    advice_en: string; // 英語アドバイス
+    staff_request_phrase: string; // 代替調味料を使った店員さん向けお願いフレーズ
+    staff_request_phrase_en: string; // 英語併記
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -36,19 +46,42 @@ export async function POST(req: NextRequest) {
     };
 
     const prefs = user_preferences || DEFAULT_USER_PREFERENCES;
-    const apiKey = process.env.GEMINI_API_KEY;
 
-    // APIキーがない、またはデモ画像の場合は高品質モックを返す
-    if (!apiKey || !image_data || image_data === "demo") {
+    // 環境変数または .env.local から確実に API キーを取得
+    let apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const envPath = path.resolve(process.cwd(), ".env.local");
+        if (fs.existsSync(envPath)) {
+          const content = fs.readFileSync(envPath, "utf-8");
+          const match = content.match(/GEMINI_API_KEY=(.+)/);
+          if (match) apiKey = match[1].trim();
+        }
+      } catch (e) {
+        console.warn("Could not read .env.local:", e);
+      }
+    }
+
+    // 画像がない、デモ実行、またはAPIキーがない場合はモックを返す
+    if (!image_data || image_data === "demo" || !apiKey) {
       return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
 
     try {
       const prompt = `
-あなたは日本の飲食店・食品のハラール成分を画像から判定する専門家AIです。
-提供された料理/メニューの画像を注意深く分析し、正確な料理名（例: 明太子パスタ、醤油ラーメン、豚カツ、牛丼、唐揚げ定食など）を特定してください。
-特定した料理の原材料や日本の一般的な調理法を考慮し、ユーザーのハラール基準に照らし合わせて以下のJSONのみを出力してください。
-訪日外国人観光客が日本語と英語を切り替えて利用できるよう、日本語と英語（_en）の両方のフィールドを必ず提供してください。
+あなたは日本の料理を99%以上の高精度で特定・ハラール判定する専門家AIです。
+提供された料理/メニューの画像を注意深く視覚的に分析してください。
+もし画像内に文字やスマホ画面が写り込んでいる場合でも、文字に惑わされず【お皿や器に盛り付けられた実際の料理そのもの】を特定してください。
+
+【料理特定と原材料予測の必須タスク】
+1. 正確な料理名を特定してください（例: 明太子パスタ、醤油ラーメン、豚骨ラーメン、鶏の唐揚げ、牛丼、親子丼、天ぷらうどん、握り寿司、生姜焼き、餃子など）。
+2. その料理に含まれている・一般的な日本の調理法で使用される可能性が極めて高い原材料・調味料（目に見える具材だけでなく、隠し味の料理酒・みりん・醤油・豚脂・エキス・出汁など）を詳細に予測してください。
+3. ユーザーのハラール基準に照らし合わせ、各原材料ごとに「安全」「注意」「要注意」の判定と理由を記載してください。
+4. 【最重要：代替食材・調味料の提案（substitute_proposal）】
+   もし注意・要注意（アルコール、みりん、醤油、豚肉等）がある場合、ユーザーが食べられそうで、日本の一般的な飲食店で別途準備・代替してもらえそうな食材や調味料（例: 塩、胡椒、オリーブオイル、レモン、刻みネギ、ポン酢、別添えなど）をAIが考案してください。
+5. 訪日外国人観光客向けに日本語と英語（_en）を必ず完全提供してください。
 
 【ユーザーのハラール基準】
 - 直接アルコール成分が含まれるもの: ${prefs.alcohol_rules?.direct_alcohol || "strict"}
@@ -58,37 +91,46 @@ export async function POST(req: NextRequest) {
 - 所定の処理がされていない豚肉以外の肉: ${prefs.non_halal_meat_level || "conditional"}
 - ユーザー任意の追加要望・アレルギー: ${prefs.custom_notes || custom_prompt || "特になし"}
 
-【判定基準のルール】
+【総合判定のルール】
 - 総合判定(overall_status):
-  - ユーザー基準に反する食材（豚肉、直接アルコール等）が含まれる場合は「danger」（要注意）
+  - ユーザー基準に反する食材（豚肉・豚骨・未処理肉・直接アルコール等）が含まれる場合は「danger」（要注意）
   - 微量発酵、加熱みりん・料理酒、エキス類など確認・注意を要する場合は「warning」（注意）
-  - 魚介類（明太子・鮭など）や野菜類でハラール上問題ない食材中心の場合は「safe」（安全）
+  - 魚介類（明太子・鮭など）や野菜・鶏卵など安全な食材のみの場合は「safe」（安全）
 
 【必須JSONフォーマット】
 {
-  "dish_name": "画像から特定した正確な料理名（例: 明太子パスタ、にくじゃが、醤油ラーメン）",
-  "dish_name_en": "Dish name in English (e.g., Mentaiko Pasta, Nikujaga, Shoyu Ramen)",
+  "dish_name": "正確な料理名（例: 明太子パスタ、醤油ラーメン、野菜サラダ）",
+  "dish_name_en": "Dish name in English (e.g., Mentaiko Pasta, Shoyu Ramen, Vegetable Salad)",
   "overall_status": "safe" | "warning" | "danger",
   "status_label": "安全" | "注意" | "要注意",
-  "summary_message": "判定の理由の要約（日本語1〜2行）",
+  "summary_message": "判定理由の要約（日本語1〜2行）",
   "summary_message_en": "Summary of analysis in English (1-2 sentences)",
   "checkpoints": [
     {
-      "name": "食材・調味料名（日本語）",
+      "name": "食材・原材料名（日本語）",
       "name_en": "Ingredient name in English",
       "level": "safe" | "warning" | "danger",
       "level_label": "安全" | "注意" | "要注意",
-      "reason": "なぜその判定になったのか具体的な理由（日本語）",
+      "reason": "ハラール上の具体的な理由（日本語）",
       "reason_en": "Detailed reason in English"
     }
   ],
-  "concerning_ingredients": ["注意または要注意となった食材リスト（日本語）。安全な場合は空配列 []"],
+  "concerning_ingredients": ["注意または要注意となった食材・調味料のリスト（日本語）。安全な場合は空配列 []"],
   "concerning_ingredients_en": ["List of concerning ingredients in English. Empty array [] if safe"],
   "proposal": {
     "remove_option_text": "〇〇を抜いてこの料理を食べますか？",
     "remove_option_text_en": "Would you like to eat this dish without [ingredients]?",
     "staff_request_phrase": "すみません、宗教上の理由により、〇〇を使わずに調理して頂くことは可能でしょうか？",
     "staff_request_phrase_en": "Could you please prepare this dish without [ingredients]?"
+  },
+  "substitute_proposal": {
+    "has_substitute": true,
+    "substitute_items": ["塩・ブラックペッパー", "オリーブオイル"],
+    "substitute_items_en": ["Salt & Pepper", "Olive Oil"],
+    "advice": "お店にある塩とオリーブオイルでシンプルに調理してもらえば、隠し味のお酒を避けて安全・美味しく楽しめます！",
+    "advice_en": "Ask to season with simple salt and olive oil instead of alcohol seasonings to enjoy safely!",
+    "staff_request_phrase": "すみません、宗教上の理由により、お酒などの調味料を使わずに【塩とオリーブオイル】で味付けして頂くことは可能でしょうか？",
+    "staff_request_phrase_en": "Excuse me, for religious reasons, could you please cook this using salt and olive oil instead of alcohol seasonings?"
   }
 }
 `;
@@ -101,8 +143,8 @@ export async function POST(req: NextRequest) {
         base64Data = parts[1];
       }
 
-      // Google Gemini 公式無料枠 REST API を直接呼び出し（軽量・高速・完全無料）
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
+      // 高速・高精度・混雑知らずの Google Gemini 3.5 Flash Lite（公式推奨モデル）
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
       const res = await fetch(apiUrl, {
         method: "POST",
@@ -113,8 +155,8 @@ export async function POST(req: NextRequest) {
               parts: [
                 { text: prompt },
                 {
-                  inline_data: {
-                    mime_type: mimeType,
+                  inlineData: {
+                    mimeType: mimeType,
                     data: base64Data,
                   },
                 },
@@ -122,7 +164,7 @@ export async function POST(req: NextRequest) {
             },
           ],
           generationConfig: {
-            response_mime_type: "application/json",
+            responseMimeType: "application/json",
             temperature: 0.1,
           },
         }),
@@ -131,18 +173,29 @@ export async function POST(req: NextRequest) {
       if (!res.ok) {
         const errBody = await res.text();
         console.error("Gemini API Error status:", res.status, errBody);
-        throw new Error(`Gemini API error ${res.status}`);
+        throw new Error(`Gemini API error ${res.status}: ${errBody}`);
       }
 
       const responseData = await res.json();
-      const rawText =
-        responseData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const parts = responseData.candidates?.[0]?.content?.parts || [];
+      const validPart =
+        parts.find((p: { text?: string; thought?: boolean }) => p.text && !p.thought) ||
+        parts[parts.length - 1];
+
+      const rawText = validPart?.text || "";
       const cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
       const result: EnhancedAnalyzeResult = JSON.parse(cleaned);
 
+      console.log("=== AI Analysis Succeeded ===");
+      console.log("Recognized Dish:", result.dish_name);
+      console.log("Checkpoints count:", result.checkpoints?.length);
+      console.log("==============================");
+
       return NextResponse.json(result);
     } catch (aiError) {
-      console.warn("Gemini call fallback:", aiError);
+      console.error("=== Gemini API Call Failed ===");
+      console.error(aiError);
+      console.error("===============================");
       return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
   } catch (error) {
@@ -197,6 +250,15 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
         staff_request_phrase: "すみません、宗教上の理由により、お酒やみりんなどのアルコール調味料を使わずに調理して頂くことは可能でしょうか？",
         staff_request_phrase_en: "Excuse me, for religious reasons, could you please prepare this without cooking sake or mirin?",
       },
+      substitute_proposal: {
+        has_substitute: true,
+        substitute_items: ["塩・ブラックペッパー", "オリーブオイル"],
+        substitute_items_en: ["Salt & Pepper", "Olive Oil"],
+        advice: "お店にある塩とオリーブオイルでシンプルに味付けしてもらえば、隠し味のお酒を避けて美味しく楽しめます！",
+        advice_en: "Ask to season with simple salt and olive oil instead of alcohol seasonings to enjoy safely!",
+        staff_request_phrase: "すみません、宗教上の理由により、お酒などの調味料を使わずに【塩とオリーブオイル】で味付けして頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, for religious reasons, could you please cook this using salt and olive oil instead of alcohol seasonings?",
+      },
     };
   }
   if (customPreset === "ramen") {
@@ -240,6 +302,15 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
         remove_option_text_en: "Would you like to eat this dish without Chashu pork?",
         staff_request_phrase: "すみません、私は宗教上の理由で豚肉を食べることができません。チャーシューを抜いて調理して頂くことは可能でしょうか？",
         staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without chashu pork?",
+      },
+      substitute_proposal: {
+        has_substitute: true,
+        substitute_items: ["煮卵・メンマ増量", "ごま油・塩"],
+        substitute_items_en: ["Extra Boiled Egg & Bamboo Shoots", "Sesame Oil & Salt"],
+        advice: "チャーシューの代わりに煮卵や野菜を増やし、ごま油と塩でシンプルにいただく相談が可能です。",
+        advice_en: "You can ask for extra eggs and vegetables seasoned with sesame oil and salt instead of pork chashu.",
+        staff_request_phrase: "すみません、豚肉の代わりに【煮卵や野菜】をトッピングして頂くことは可能でしょうか？",
+        staff_request_phrase_en: "Excuse me, could you please substitute pork chashu with extra boiled egg or vegetables?",
       },
     };
   }
@@ -285,6 +356,15 @@ function getMockResult(prefs: UserPreferences, customPreset?: string): EnhancedA
       remove_option_text_en: "Would you like to eat this dish without pork?",
       staff_request_phrase: "すみません、私は宗教上の理由で豚肉を食べることができません。ぶた肉を使わずに調理して頂くことは可能でしょうか？",
       staff_request_phrase_en: "Excuse me, for religious reasons I cannot eat pork. Could you prepare this without pork?",
+    },
+    substitute_proposal: {
+      has_substitute: true,
+      substitute_items: ["塩・醤油なし茹で野菜"],
+      substitute_items_en: ["Steamed Vegetables with Salt"],
+      advice: "豚の出汁が煮汁全体に溶け出しているため、具材抜き調理が難しい場合は別のお料理をご検討ください。",
+      advice_en: "Since pork broth permeates the whole dish, finding another menu item is recommended.",
+      staff_request_phrase: "すみません、豚肉や豚出汁を使っていない別のお料理はありますか？",
+      staff_request_phrase_en: "Excuse me, do you have any dishes without pork meat or pork broth?",
     },
   };
 }
