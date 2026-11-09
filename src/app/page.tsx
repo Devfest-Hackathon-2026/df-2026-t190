@@ -108,11 +108,11 @@ const translations = {
     proposalSafeTitle: "このメニューは安心してお召し上がりいただけます！",
     proposalWarningDesc: "以下の選択肢から選ぶことができます。",
     proposalSafeDesc: "楽しい日本での食事をお楽しみください。",
-    substituteOptionBadge: "AI特別提案",
+    substituteOptionBadge: "✨ AIからの提案",
     substituteActionPrefix: "代わりに【",
     substituteActionSuffix: "】で味付け・調理してもらう",
     substituteDescFallback: "お店で準備してもらいやすい安全な食材・調味料に変更して美味しく楽しめます。",
-    option1Badge: "選択肢 A",
+    option1Badge: "食材抜き",
     option1Action: "を抜いて、この料理を食べる",
     option1Desc:
       "店員さん向けの指差しカードを表示して、食材を除いて調理してもらえるか確認します。",
@@ -125,9 +125,9 @@ const translations = {
     staffCardTitle: "店員さんに見せる指差しカード",
     fullScreen: "大画面で表示",
     yesButton: "はい",
-    noButton: "ごめんなさい、できません",
+    noButton: "ごめんなさい。対応できません",
     reactionYes: "🎉 ありがとうございます！安心してご注文いただけます。",
-    reactionNo: "承知しました。別の安全なメニューを探しましょう！",
+    reactionNo: "承知いたしました。他の食べ物を見るため、カメラ画面に戻ります...",
     scanOtherDish: "他の食べ物を見る（カメラに戻る）",
     staffFullscreenBadge: "店員さんにお見せください",
     closeCard: "画面を閉じる",
@@ -223,11 +223,11 @@ const translations = {
     proposalSafeTitle: "You can enjoy this dish with confidence!",
     proposalWarningDesc: "You can choose from the options below.",
     proposalSafeDesc: "Have a wonderful dining experience in Japan.",
-    substituteOptionBadge: "AI Recommendation",
+    substituteOptionBadge: "✨ AI Suggestion",
     substituteActionPrefix: "Substitute with [",
     substituteActionSuffix: "] instead",
     substituteDescFallback: "Enjoy safely by asking the restaurant to use available halal seasonings.",
-    option1Badge: "Option A",
+    option1Badge: "Remove Ingredients",
     option1Action: "Eat this dish without ",
     option1Desc:
       "Open the staff communication card to ask if they can prepare it without these ingredients.",
@@ -239,10 +239,10 @@ const translations = {
     // 店員さんに見せる指差しカード
     staffCardTitle: "Staff Pointing Card",
     fullScreen: "Full Screen",
-    yesButton: "Yes (はい)",
-    noButton: "No (できません)",
+    yesButton: "はい (Yes)",
+    noButton: "ごめんなさい。対応できません (No)",
     reactionYes: "🎉 Thank you! You can order with confidence.",
-    reactionNo: "Understood. Let's find another safe menu option!",
+    reactionNo: "Understood. Returning to camera to find other dishes...",
     scanOtherDish: "Find other dishes (Return to Camera)",
     staffFullscreenBadge: "Please show this to staff",
     closeCard: "Close",
@@ -539,6 +539,17 @@ export default function HalalScanApp() {
       setShowSavedToast(false);
       setCurrentTab("home");
     }, 1200);
+  };
+
+  // 店員さんが「ごめんなさい。対応できません」をタップした時の処理
+  const handleStaffDecline = () => {
+    setStaffResponse("no");
+    // 1.5秒後に自動的に指差しカードを閉じてカメラ画面に戻る
+    setTimeout(() => {
+      setIsFullscreenStaffView(false);
+      setStaffResponse(null);
+      setCurrentTab("camera");
+    }, 1500);
   };
 
   // ラジオボタン用コンポーネント（赤・黄色・グレー基調）
@@ -860,18 +871,20 @@ export default function HalalScanApp() {
                   <span className="text-base font-black">{t.yesButton}</span>
                 </button>
 
-                {/* ごめんなさい、できません */}
+                {/* ごめんなさい。対応できません */}
                 <button
                   type="button"
-                  onClick={() => setStaffResponse("no")}
-                  className={`py-5 rounded-3xl font-black text-sm shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
+                  onClick={handleStaffDecline}
+                  className={`py-5 rounded-3xl font-black shadow-xl flex flex-col items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer border-2 ${
                     staffResponse === "no"
                       ? "bg-rose-600 text-white border-rose-300 ring-4 ring-rose-200"
                       : "bg-white/20 text-white border-white/40 hover:bg-white/30"
                   }`}
                 >
                   <XCircle className="w-7 h-7 stroke-[2.5]" />
-                  <span className="text-xs font-black">{t.noButton}</span>
+                  <span className="text-xs font-black text-center leading-tight px-1">
+                    {t.noButton}
+                  </span>
                 </button>
               </div>
 
@@ -1357,101 +1370,76 @@ export default function HalalScanApp() {
                   </h3>
                 </div>
 
-                {/* 注意・要注意の食材がある場合 */}
+                {/* 注意・要注意の食材がある場合: ユーザーが選べる2つのボタンを表示 */}
                 {analysisResult.concerning_ingredients.length > 0 ? (
-                  <div className="space-y-2.5">
-                    {/* 【✨ AI特別提案】お店にある代替食材・調味料で調理してもらう提案 */}
-                    {analysisResult.substitute_proposal?.has_substitute && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStaffCardMode("substitute");
-                          setIsFullscreenStaffView(true);
-                        }}
-                        className="w-full p-4 rounded-3xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer group border-2 border-amber-300/40"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-                            <Sparkles className="w-5 h-5 text-white animate-pulse" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/15 px-2 py-0.5 rounded-full">
-                                {t.substituteOptionBadge}
-                              </span>
-                              <span className="text-[9px] font-bold text-amber-100 bg-black/20 px-1.5 py-0.5 rounded-full">
-                                {t.recommendedBadge}
-                              </span>
-                            </div>
-                            <h4 className="text-xs sm:text-sm font-black leading-tight mt-1 truncate">
-                              {t.substituteActionPrefix}
-                              {getSubstituteItemsText(analysisResult)}
-                              {t.substituteActionSuffix}
-                            </h4>
-                            <p className="text-[10px] text-amber-100/90 mt-0.5 line-clamp-1">
-                              {getSubstituteAdvice(analysisResult)}
-                            </p>
-                          </div>
+                  <div className="space-y-3">
+                    {/* ボタン1: AIからの提案を選択 */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStaffCardMode("substitute");
+                        setIsFullscreenStaffView(true);
+                      }}
+                      className="w-full p-4 rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-amber-300/40"
+                    >
+                      <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles className="w-5 h-5 text-amber-100" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-black uppercase text-amber-200 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                            {t.substituteOptionBadge}
+                          </span>
+                          <span className="text-[9px] font-bold text-amber-100 bg-black/25 px-1.5 py-0.5 rounded-full">
+                            {t.recommendedBadge}
+                          </span>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-white/80 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                      </button>
-                    )}
+                        <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
+                          {t.substituteActionPrefix}
+                          {getSubstituteItemsText(analysisResult)}
+                          {t.substituteActionSuffix}
+                        </h4>
+                        <p className="text-[11px] text-amber-100/95 mt-1 leading-relaxed break-words">
+                          {getSubstituteAdvice(analysisResult)}
+                        </p>
+                        <p className="text-[10px] font-bold text-amber-200 mt-2 flex items-center gap-1">
+                          <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </p>
+                      </div>
+                    </button>
 
-                    {/* 提案1: 該当食材を抜いて食べる（店員指差しカードを開く） */}
+                    {/* ボタン2: （食べられない食べ物）を抜いてこの料理を食べる */}
                     <button
                       type="button"
                       onClick={() => {
                         setStaffCardMode("remove");
                         setIsFullscreenStaffView(true);
                       }}
-                      className="w-full p-4 rounded-3xl bg-gradient-to-r from-[#24C27A] to-[#1EA866] text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer group"
+                      className="w-full p-4 rounded-3xl bg-gradient-to-br from-[#24C27A] to-[#1EA866] text-white shadow-md hover:shadow-lg transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group border-2 border-emerald-300/40"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-                          <Utensils className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black uppercase text-white/80 tracking-wider">
+                      <div className="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 mt-0.5">
+                        <Utensils className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-black uppercase text-white/90 tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
                             {t.option1Badge}
                           </span>
-                          <h4 className="text-xs sm:text-sm font-black leading-tight">
-                            {lang === "JP"
-                              ? `${analysisResult.concerning_ingredients.join("・")}${t.option1Action}`
-                              : `${t.option1Action}${getConcerningIngredientsText(analysisResult)}`}
-                          </h4>
-                          <p className="text-[10px] text-white/90 mt-0.5">
-                            {lang === "JP"
-                              ? "店員さん指差しカードを表示 ＞"
-                              : "Open Staff Pointing Card ＞"}
-                          </p>
                         </div>
+                        <h4 className="text-sm font-black leading-snug mt-1.5 break-words">
+                          {lang === "JP"
+                            ? `「${analysisResult.concerning_ingredients.join("・")}」を抜いてこの料理を食べる`
+                            : `Eat this dish without ${getConcerningIngredientsText(analysisResult)}`}
+                        </h4>
+                        <p className="text-[11px] text-white/90 mt-1 leading-relaxed break-words">
+                          {t.option1Desc}
+                        </p>
+                        <p className="text-[10px] font-bold text-white mt-2 flex items-center gap-1">
+                          <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-white/80 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    </button>
-
-                    {/* 提案2: 他の食べ物を見る（カメラに戻る） */}
-                    <button
-                      type="button"
-                      onClick={() => setCurrentTab("camera")}
-                      className="w-full p-4 rounded-3xl bg-white border border-slate-200 text-slate-700 shadow-xs hover:bg-slate-50 transition-all active:scale-98 flex items-center justify-between text-left cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-600">
-                          <RotateCcw className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                            {t.option2Badge}
-                          </span>
-                          <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">
-                            {t.option2Action}
-                          </h4>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            {t.option2Desc}
-                          </p>
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-slate-400" />
                     </button>
                   </div>
                 ) : (
@@ -1513,93 +1501,76 @@ export default function HalalScanApp() {
                 </p>
               </div>
 
-              {/* 主要な選択肢 */}
+              {/* ユーザーが選べる2つの選択肢 */}
               <div className="space-y-3">
-                {/* AI特別提案: 代替調味料・食材で調理 */}
+                {/* 選択肢1: AI特別提案 (代替調味料・食材で調理) */}
                 {analysisResult.substitute_proposal?.has_substitute && (
                   <div
                     onClick={() => {
                       setStaffCardMode("substitute");
                       setIsFullscreenStaffView(true);
                     }}
-                    className="rounded-3xl p-5 border-2 border-amber-300 bg-amber-50/50 hover:border-amber-500 transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="rounded-3xl p-5 border-2 border-amber-300 bg-amber-50/60 hover:border-amber-500 transition-all cursor-pointer shadow-sm active:scale-98"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
                         <Sparkles className="w-5 h-5 text-white" />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
                             {t.substituteOptionBadge}
                           </span>
-                          <span className="text-[9px] font-bold text-amber-700">
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-200/50 px-1.5 py-0.5 rounded-full">
                             {t.recommendedBadge}
                           </span>
                         </div>
-                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1">
+                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
                           {t.substituteActionPrefix}
                           {getSubstituteItemsText(analysisResult)}
                           {t.substituteActionSuffix}
                         </h3>
-                        <p className="text-[11px] text-slate-600 mt-1">
+                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
                           {getSubstituteAdvice(analysisResult)}
+                        </p>
+                        <p className="text-[10px] font-bold text-amber-700 mt-2 flex items-center gap-1">
+                          <span>{lang === "JP" ? "店員さん指差しカードを表示 ＞" : "Open Staff Pointing Card ＞"}</span>
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* 選択肢1: 食材を抜いて食べる (全画面店員指差しカードを開く) */}
+                {/* 選択肢2: （食べられない食べ物）を抜いてこの料理を食べる */}
                 {analysisResult.concerning_ingredients.length > 0 && (
                   <div
                     onClick={() => {
                       setStaffCardMode("remove");
                       setIsFullscreenStaffView(true);
                     }}
-                    className="rounded-3xl p-5 border-2 border-slate-200 bg-white hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="rounded-3xl p-5 border-2 border-emerald-200 bg-emerald-50/40 hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-[#24C27A] text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-2xl bg-[#24C27A] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
                         <Utensils className="w-5 h-5" />
                       </div>
-                      <div className="flex-1">
-                        <span className="text-[10px] font-black uppercase text-[#24C27A] tracking-wider">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-black uppercase text-[#24C27A] bg-emerald-100 px-2 py-0.5 rounded-full tracking-wider">
                           {t.option1Badge}
                         </span>
-                        <h3 className="text-sm font-black text-slate-900 leading-snug">
+                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
                           {lang === "JP"
-                            ? `${analysisResult.concerning_ingredients.join("・")}${t.option1Action}`
-                            : `${t.option1Action}${getConcerningIngredientsText(analysisResult)}`}
+                            ? `「${analysisResult.concerning_ingredients.join("・")}」を抜いてこの料理を食べる`
+                            : `Eat this dish without ${getConcerningIngredientsText(analysisResult)}`}
                         </h3>
-                        <p className="text-[11px] text-slate-500 mt-1">{t.option1Desc}</p>
+                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">{t.option1Desc}</p>
+                        <p className="text-[10px] font-bold text-[#24C27A] mt-2 flex items-center gap-1">
+                          <span>{lang === "JP" ? "店員さん指差しカードを表示 ＞" : "Open Staff Pointing Card ＞"}</span>
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
-
-                {/* 選択肢2: 他の食べ物を見る (カメラ画面に戻る) */}
-                <div
-                  onClick={() => setCurrentTab("camera")}
-                  className="rounded-3xl p-5 border-2 border-slate-200 bg-white hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-                      <RotateCcw className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                        {analysisResult.concerning_ingredients.length > 0
-                          ? t.option2Badge
-                          : t.recommendedBadge}
-                      </span>
-                      <h3 className="text-sm font-black text-slate-900 leading-snug">
-                        {t.option2Action}
-                      </h3>
-                      <p className="text-[11px] text-slate-500 mt-1">{t.option2Desc}</p>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* 選択肢1が選ばれた時の「お店の方に見せるフレーズ」画面 */}
