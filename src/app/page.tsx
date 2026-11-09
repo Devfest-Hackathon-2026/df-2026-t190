@@ -240,7 +240,7 @@ const translations = {
     staffCardTitle: "Staff Pointing Card",
     fullScreen: "Full Screen",
     yesButton: "はい (Yes)",
-    noButton: "ごめんなさい。対応できません (No)",
+    noButton: "できません (Sorry, we can't🥺)",
     reactionYes: "🎉 Thank you! You can order with confidence.",
     reactionNo: "Understood. Returning to camera to find other dishes...",
     scanOtherDish: "Find other dishes (Return to Camera)",
@@ -746,8 +746,9 @@ export default function HalalScanApp() {
     return getConciseConcerningIngredientsText(item);
   };
 
-  const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null) => {
+  const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null, targetLang?: "JP" | "EN") => {
     if (!item || !item.substitute_proposal) return "";
+    const activeLang = targetLang || lang;
 
     const normalizeItem = (name: string): string => {
       if (name.includes("オリーブオイル") || name.includes("オリーブ油")) {
@@ -763,7 +764,7 @@ export default function HalalScanApp() {
       return name;
     };
 
-    if (lang === "JP") {
+    if (activeLang === "JP") {
       const items = item.substitute_proposal.substitute_items.map(normalizeItem);
       return items.join("・") || "塩・植物由来の油など";
     }
@@ -773,7 +774,7 @@ export default function HalalScanApp() {
       return itemsEn.join(", ");
     }
 
-    const fallbackItems = item.substitute_proposal.substitute_items.map(normalizeItem);
+    const fallbackItems = item.substitute_proposal.substitute_items.map(normalizeItemEn);
     return fallbackItems.join(", ") || "Halal Seasonings";
   };
 
@@ -883,28 +884,29 @@ export default function HalalScanApp() {
                 <p className="text-base text-white/95 font-medium">すみません、宗教上の理由により、</p>
               </div>
 
-              {/* メイン質問文: 代替調味料モードか、食材抜きモードかで切り替え */}
+              {/* メイン質問文: 英語表示にしていても、中心の太文字は常にすべて日本語で表示 */}
               {staffCardMode === "substitute" && analysisResult.substitute_proposal?.has_substitute ? (
                 <>
                   <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
                     「
                     <span className="line-through decoration-rose-300/80 decoration-2 opacity-90">
-                      {getTargetIngredientText(analysisResult)}
+                      {getTargetIngredientText(analysisResult, "JP")}
                     </span>
                     」の代わりに、
                     <br />
                     「
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4 font-black text-amber-200">
-                      {getSubstituteItemsText(analysisResult)}
+                      {getSubstituteItemsText(analysisResult, "JP")}
                     </span>
                     」で味付け・調理して頂くことは可能でしょうか？
                   </p>
 
+                  {/* 下部に小さく英語で文章を表示 */}
                   {lang === "EN" && (
                     <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
                       (Could you please season/prepare this with{" "}
                       <span className="font-bold underline text-amber-200">
-                        {getSubstituteItemsText(analysisResult)}
+                        {getSubstituteItemsText(analysisResult, "EN")}
                       </span>{" "}
                       instead of{" "}
                       <span className="line-through opacity-80">
@@ -919,11 +921,12 @@ export default function HalalScanApp() {
                   <p className="text-xl sm:text-2xl font-black leading-snug tracking-tight text-white drop-shadow-sm">
                     「
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
-                      {getConciseConcerningIngredientsText(analysisResult)}
+                      {getConciseConcerningIngredientsText(analysisResult, "JP")}
                     </span>
                     」を使わずに調理して頂くことは可能でしょうか？
                   </p>
 
+                  {/* 下部に小さく英語で文章を表示 */}
                   {lang === "EN" && (
                     <p className="text-xs text-white/90 font-medium border-t border-white/20 pt-3 leading-relaxed">
                       (Could you please prepare this dish without{" "}
@@ -1704,7 +1707,7 @@ export default function HalalScanApp() {
 
                   <div className="space-y-1 text-center py-1">
                     <p className="text-base font-black text-slate-900 leading-snug">
-                      「{getConciseConcerningIngredientsText(analysisResult)}を使わずに調理して頂くことは可能でしょうか？」
+                      「{getConciseConcerningIngredientsText(analysisResult, "JP")}を使わずに調理して頂くことは可能でしょうか？」
                     </p>
                     {lang === "EN" && (
                       <p className="text-[11px] text-slate-500">
