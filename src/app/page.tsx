@@ -552,6 +552,46 @@ export default function HalalScanApp() {
     }, 1500);
   };
 
+  // チェックポイント用バッジスタイル（確実なインラインスタイル＆パージ防止クラス）
+  const getCheckpointBadgeProps = (level: string) => {
+    if (level === "danger") {
+      return {
+        style: { backgroundColor: "#FFE4E6", color: "#E11D48" },
+        className: "status-badge-danger bg-rose-100 text-rose-600",
+      };
+    }
+    if (level === "warning") {
+      return {
+        style: { backgroundColor: "#FEF3C7", color: "#B45309" },
+        className: "status-badge-warning bg-amber-100 text-amber-700",
+      };
+    }
+    return {
+      style: { backgroundColor: "#D1FAE5", color: "#047857" },
+      className: "status-badge-safe bg-emerald-100 text-emerald-700",
+    };
+  };
+
+  // ユーザー基準サマリー用バッジスタイル
+  const getToleranceBadgeProps = (level: ToleranceLevel) => {
+    if (level === "strict") {
+      return {
+        style: { backgroundColor: "#FFE4E6", color: "#E11D48" },
+        className: "bg-rose-100 text-rose-600",
+      };
+    }
+    if (level === "conditional") {
+      return {
+        style: { backgroundColor: "#FEF3C7", color: "#B45309" },
+        className: "bg-amber-100 text-amber-700",
+      };
+    }
+    return {
+      style: { backgroundColor: "#E2E8F0", color: "#475569" },
+      className: "bg-slate-200 text-slate-600",
+    };
+  };
+
   // ラジオボタン用コンポーネント（赤・黄色・グレー基調）
   const RadioOptionGroup = ({
     value,
@@ -566,10 +606,15 @@ export default function HalalScanApp() {
         <button
           type="button"
           onClick={() => onChange("strict")}
+          style={
+            value === "strict"
+              ? { backgroundColor: "#F43F5E", color: "#FFFFFF", borderColor: "#F43F5E" }
+              : { backgroundColor: "#FFF1F2", color: "#BE123C", borderColor: "#FECDD3" }
+          }
           className={`flex flex-col items-center justify-center py-2.5 px-1.5 rounded-2xl text-center transition-all cursor-pointer border ${
             value === "strict"
-              ? "bg-rose-500 text-white border-rose-500 shadow-sm ring-2 ring-rose-200"
-              : "bg-rose-50/50 text-rose-700 border-rose-200/80 hover:bg-rose-100/60"
+              ? "shadow-sm ring-2 ring-rose-200"
+              : "hover:bg-rose-100/60"
           }`}
         >
           <span className="text-base font-black leading-none mb-1">❌</span>
@@ -582,10 +627,15 @@ export default function HalalScanApp() {
         <button
           type="button"
           onClick={() => onChange("conditional")}
+          style={
+            value === "conditional"
+              ? { backgroundColor: "#F59E0B", color: "#FFFFFF", borderColor: "#F59E0B" }
+              : { backgroundColor: "#FFFBEB", color: "#92400E", borderColor: "#FDE68A" }
+          }
           className={`flex flex-col items-center justify-center py-2.5 px-1.5 rounded-2xl text-center transition-all cursor-pointer border ${
             value === "conditional"
-              ? "bg-amber-500 text-white border-amber-500 shadow-sm ring-2 ring-amber-200"
-              : "bg-amber-50/50 text-amber-800 border-amber-200/80 hover:bg-amber-100/60"
+              ? "shadow-sm ring-2 ring-amber-200"
+              : "hover:bg-amber-100/60"
           }`}
         >
           <span className="text-base font-black leading-none mb-1">🔺</span>
@@ -598,10 +648,15 @@ export default function HalalScanApp() {
         <button
           type="button"
           onClick={() => onChange("allow")}
+          style={
+            value === "allow"
+              ? { backgroundColor: "#475569", color: "#FFFFFF", borderColor: "#475569" }
+              : { backgroundColor: "#F1F5F9", color: "#475569", borderColor: "#E2E8F0" }
+          }
           className={`flex flex-col items-center justify-center py-2.5 px-1.5 rounded-2xl text-center transition-all cursor-pointer border ${
             value === "allow"
-              ? "bg-slate-600 text-white border-slate-600 shadow-sm ring-2 ring-slate-200"
-              : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+              ? "shadow-sm ring-2 ring-slate-200"
+              : "hover:bg-slate-200"
           }`}
         >
           <span className="text-base font-black leading-none mb-1">◯</span>
@@ -1067,13 +1122,8 @@ export default function HalalScanApp() {
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
                     <span className="font-bold text-slate-700">{t.porkTitle}</span>
                     <span
-                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
-                        porkPolicy === "strict"
-                          ? "bg-rose-100 text-rose-600"
-                          : porkPolicy === "conditional"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-200 text-slate-600"
-                      }`}
+                      style={getToleranceBadgeProps(porkPolicy).style}
+                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${getToleranceBadgeProps(porkPolicy).className}`}
                     >
                       {getLevelLabel(porkPolicy)}
                     </span>
@@ -1083,13 +1133,8 @@ export default function HalalScanApp() {
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
                     <span className="font-bold text-slate-700">{t.nonHalalMeatTitle}</span>
                     <span
-                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
-                        nonHalalMeatPolicy === "strict"
-                          ? "bg-rose-100 text-rose-600"
-                          : nonHalalMeatPolicy === "conditional"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-200 text-slate-600"
-                      }`}
+                      style={getToleranceBadgeProps(nonHalalMeatPolicy).style}
+                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${getToleranceBadgeProps(nonHalalMeatPolicy).className}`}
                     >
                       {getLevelLabel(nonHalalMeatPolicy)}
                     </span>
@@ -1099,13 +1144,8 @@ export default function HalalScanApp() {
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
                     <span className="font-bold text-slate-700">{t.directAlcoholTitle}</span>
                     <span
-                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
-                        alcoholDirect === "strict"
-                          ? "bg-rose-100 text-rose-600"
-                          : alcoholDirect === "conditional"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-200 text-slate-600"
-                      }`}
+                      style={getToleranceBadgeProps(alcoholDirect).style}
+                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${getToleranceBadgeProps(alcoholDirect).className}`}
                     >
                       {getLevelLabel(alcoholDirect)}
                     </span>
@@ -1115,13 +1155,8 @@ export default function HalalScanApp() {
                   <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-50">
                     <span className="font-bold text-slate-700">{t.cookedAlcoholTitle}</span>
                     <span
-                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${
-                        alcoholCooked === "strict"
-                          ? "bg-rose-100 text-rose-600"
-                          : alcoholCooked === "conditional"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-slate-200 text-slate-600"
-                      }`}
+                      style={getToleranceBadgeProps(alcoholCooked).style}
+                      className={`px-2.5 py-1 rounded-full font-black text-[10px] ${getToleranceBadgeProps(alcoholCooked).className}`}
                     >
                       {getLevelLabel(alcoholCooked)}
                     </span>
@@ -1357,16 +1392,22 @@ export default function HalalScanApp() {
               {/* 総合判定ステータスバッジ */}
               <div>
                 {analysisResult.overall_status === "danger" && (
-                  <div className="bg-[#FFF1F2] border border-rose-200 rounded-3xl p-4 flex items-center gap-3.5 text-rose-700 shadow-sm">
-                    <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0">
+                  <div
+                    style={{ backgroundColor: "#FFF1F2", borderColor: "#FECDD3", color: "#9F1239" }}
+                    className="status-card-danger border rounded-3xl p-4 flex items-center gap-3.5 shadow-sm"
+                  >
+                    <div
+                      style={{ backgroundColor: "#F43F5E", color: "#FFFFFF" }}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                    >
                       <XCircle className="w-6 h-6 stroke-[2.5]" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-rose-500">
+                      <p style={{ color: "#E11D48" }} className="text-xs font-black uppercase tracking-wider">
                         {lang === "JP" ? "判定: " : "Status: "}
                         {t.statusHighCaution}
                       </p>
-                      <p className="text-xs font-bold leading-tight mt-0.5 text-rose-800">
+                      <p style={{ color: "#881337" }} className="text-xs font-bold leading-tight mt-0.5">
                         {t.statusDangerSummary}
                       </p>
                     </div>
@@ -1374,16 +1415,22 @@ export default function HalalScanApp() {
                 )}
 
                 {analysisResult.overall_status === "warning" && (
-                  <div className="bg-[#FFFBEB] border border-amber-200 rounded-3xl p-4 flex items-center gap-3.5 text-amber-800 shadow-sm">
-                    <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                  <div
+                    style={{ backgroundColor: "#FFFBEB", borderColor: "#FDE68A", color: "#78350F" }}
+                    className="status-card-warning border rounded-3xl p-4 flex items-center gap-3.5 shadow-sm"
+                  >
+                    <div
+                      style={{ backgroundColor: "#F59E0B", color: "#FFFFFF" }}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                    >
                       <AlertCircle className="w-6 h-6 stroke-[2.5]" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-amber-600">
+                      <p style={{ color: "#D97706" }} className="text-xs font-black uppercase tracking-wider">
                         {lang === "JP" ? "判定: " : "Status: "}
                         {t.statusCaution}
                       </p>
-                      <p className="text-xs font-bold leading-tight mt-0.5 text-amber-900">
+                      <p style={{ color: "#78350F" }} className="text-xs font-bold leading-tight mt-0.5">
                         {t.statusWarningSummary}
                       </p>
                     </div>
@@ -1391,16 +1438,22 @@ export default function HalalScanApp() {
                 )}
 
                 {analysisResult.overall_status === "safe" && (
-                  <div className="bg-[#F0FDF4] border border-emerald-200 rounded-3xl p-4 flex items-center gap-3.5 text-emerald-800 shadow-sm">
-                    <div className="w-10 h-10 rounded-2xl bg-[#24C27A] text-white flex items-center justify-center shrink-0">
+                  <div
+                    style={{ backgroundColor: "#F0FDF4", borderColor: "#A7F3D0", color: "#064E3B" }}
+                    className="status-card-safe border rounded-3xl p-4 flex items-center gap-3.5 shadow-sm"
+                  >
+                    <div
+                      style={{ backgroundColor: "#24C27A", color: "#FFFFFF" }}
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
+                    >
                       <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
                     </div>
                     <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-emerald-600">
+                      <p style={{ color: "#059669" }} className="text-xs font-black uppercase tracking-wider">
                         {lang === "JP" ? "判定: " : "Status: "}
                         {t.statusSafe}
                       </p>
-                      <p className="text-xs font-bold leading-tight mt-0.5 text-emerald-900">
+                      <p style={{ color: "#064E3B" }} className="text-xs font-bold leading-tight mt-0.5">
                         {t.statusSafeSummary}
                       </p>
                     </div>
@@ -1414,36 +1467,34 @@ export default function HalalScanApp() {
                   {t.checkpointsHeader} ({analysisResult.checkpoints.length})
                 </h3>
                 <div className="space-y-2">
-                  {analysisResult.checkpoints.map((cp, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs space-y-1.5"
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-black text-slate-900">
-                          {getCheckpointName(cp.name, cp.name_en)}
-                        </span>
-                        <span
-                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                            cp.level === "danger"
-                              ? "bg-rose-100 text-rose-600"
+                  {analysisResult.checkpoints.map((cp, idx) => {
+                    const badgeProps = getCheckpointBadgeProps(cp.level);
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs space-y-1.5"
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-black text-slate-900">
+                            {getCheckpointName(cp.name, cp.name_en)}
+                          </span>
+                          <span
+                            style={badgeProps.style}
+                            className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${badgeProps.className}`}
+                          >
+                            {cp.level === "danger"
+                              ? t.statusHighCaution
                               : cp.level === "warning"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {cp.level === "danger"
-                            ? t.statusHighCaution
-                            : cp.level === "warning"
-                            ? t.statusCaution
-                            : t.statusSafe}
-                        </span>
+                              ? t.statusCaution
+                              : t.statusSafe}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                          {getCheckpointReason(cp.reason, cp.reason_en)}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                        {getCheckpointReason(cp.reason, cp.reason_en)}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -1467,31 +1518,45 @@ export default function HalalScanApp() {
                           setStaffCardMode("substitute");
                           setIsFullscreenStaffView(true);
                         }}
-                        className="w-full p-4 rounded-3xl bg-amber-50/80 border-2 border-amber-300 hover:border-amber-400 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
+                        style={{
+                          backgroundColor: "#FFFBEB",
+                          borderColor: "#FCD34D",
+                          color: "#0F172A",
+                        }}
+                        className="w-full p-4 rounded-3xl border-2 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
                       >
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                        <div
+                          style={{ backgroundColor: "#F59E0B", color: "#FFFFFF" }}
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs mt-0.5"
+                        >
                           <Sparkles className="w-5 h-5 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
+                            <span
+                              style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}
+                              className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
+                            >
                               {t.substituteOptionBadge}
                             </span>
-                            <span className="text-[9px] font-bold text-amber-700 bg-amber-200/60 px-1.5 py-0.5 rounded-full">
+                            <span
+                              style={{ backgroundColor: "#FDE68A", color: "#78350F" }}
+                              className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            >
                               {t.recommendedBadge}
                             </span>
                           </div>
-                          <h4 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
+                          <h4 style={{ color: "#0F172A" }} className="text-sm font-black leading-snug mt-1.5 break-words">
                             {lang === "JP"
                               ? `「${getTargetIngredientText(analysisResult)}」の代わりに【${getSubstituteItemsText(analysisResult)}】で味付けしてもらう`
                               : `Substitute [${getTargetIngredientText(analysisResult, "EN")}] with [${getSubstituteItemsText(analysisResult)}]`}
                           </h4>
-                          <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
+                          <p style={{ color: "#475569" }} className="text-[11px] mt-1 leading-relaxed break-words">
                             {getSubstituteAdvice(analysisResult)}
                           </p>
-                          <p className="text-[10px] font-bold text-amber-700 mt-2 flex items-center gap-1">
+                          <p style={{ color: "#B45309" }} className="text-[10px] font-bold mt-2 flex items-center gap-1">
                             <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
-                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-amber-600" />
+                            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                           </p>
                         </div>
                       </button>
@@ -1504,28 +1569,39 @@ export default function HalalScanApp() {
                         setStaffCardMode("remove");
                         setIsFullscreenStaffView(true);
                       }}
-                      className="w-full p-4 rounded-3xl bg-emerald-50/80 border-2 border-emerald-300 hover:border-emerald-400 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
+                      style={{
+                        backgroundColor: "#ECFDF5",
+                        borderColor: "#6EE7B7",
+                        color: "#0F172A",
+                      }}
+                      className="w-full p-4 rounded-3xl border-2 text-slate-900 shadow-sm hover:shadow-md transition-all active:scale-98 flex items-start gap-3.5 text-left cursor-pointer group"
                     >
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <div
+                        style={{ backgroundColor: "#059669", color: "#FFFFFF" }}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs mt-0.5"
+                      >
                         <Utensils className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full tracking-wider">
+                          <span
+                            style={{ backgroundColor: "#D1FAE5", color: "#065F46" }}
+                            className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
+                          >
                             {t.option1Badge}
                           </span>
                         </div>
-                        <h4 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
+                        <h4 style={{ color: "#0F172A" }} className="text-sm font-black leading-snug mt-1.5 break-words">
                           {lang === "JP"
                             ? `「${getConciseConcerningIngredientsText(analysisResult)}」を抜いてこの料理を食べる`
                             : `Eat this dish without ${getConciseConcerningIngredientsText(analysisResult, "EN")}`}
                         </h4>
-                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
+                        <p style={{ color: "#475569" }} className="text-[11px] mt-1 leading-relaxed break-words">
                           {t.option1Desc}
                         </p>
-                        <p className="text-[10px] font-bold text-emerald-700 mt-2 flex items-center gap-1">
+                        <p style={{ color: "#047857" }} className="text-[10px] font-bold mt-2 flex items-center gap-1">
                           <span>{lang === "JP" ? "店員さん指差しカードを表示" : "Open Staff Pointing Card"}</span>
-                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-emerald-600" />
+                          <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </p>
                       </div>
                     </button>
@@ -1560,7 +1636,10 @@ export default function HalalScanApp() {
                 ) : (
                   /* 安全な場合 */
                   <div className="space-y-2.5">
-                    <div className="p-4 rounded-3xl bg-[#F0FDF4] border border-emerald-200 text-emerald-800 text-xs font-bold leading-relaxed">
+                    <div
+                      style={{ backgroundColor: "#F0FDF4", borderColor: "#A7F3D0", color: "#065F46" }}
+                      className="p-4 rounded-3xl border text-xs font-bold leading-relaxed"
+                    >
                       {lang === "JP"
                         ? "このメニューはハラール基準を満たしています。安心してお召し上がりください！"
                         : "This dish meets your halal criteria. Enjoy your meal with confidence!"}
@@ -1568,7 +1647,8 @@ export default function HalalScanApp() {
                     <button
                       type="button"
                       onClick={() => setCurrentTab("camera")}
-                      className="w-full py-3.5 rounded-full bg-[#24C27A] text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      style={{ backgroundColor: "#24C27A", color: "#FFFFFF" }}
+                      className="w-full py-3.5 rounded-full text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <RotateCcw className="w-4 h-4" />
                       <span>{t.option2Action}</span>
@@ -1625,30 +1705,44 @@ export default function HalalScanApp() {
                       setStaffCardMode("substitute");
                       setIsFullscreenStaffView(true);
                     }}
-                    className="rounded-3xl p-5 border-2 border-amber-300 bg-amber-50/60 hover:border-amber-500 transition-all cursor-pointer shadow-sm active:scale-98"
+                    style={{
+                      backgroundColor: "#FFFBEB",
+                      borderColor: "#FCD34D",
+                      color: "#0F172A",
+                    }}
+                    className="rounded-3xl p-5 border-2 hover:border-amber-400 transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+                      <div
+                        style={{ backgroundColor: "#F59E0B", color: "#FFFFFF" }}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm mt-0.5"
+                      >
                         <Sparkles className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] font-black uppercase text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full tracking-wider">
+                          <span
+                            style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}
+                            className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
+                          >
                             {t.substituteOptionBadge}
                           </span>
-                          <span className="text-[9px] font-bold text-amber-700 bg-amber-200/50 px-1.5 py-0.5 rounded-full">
+                          <span
+                            style={{ backgroundColor: "#FDE68A", color: "#78350F" }}
+                            className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                          >
                             {t.recommendedBadge}
                           </span>
                         </div>
-                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
+                        <h3 style={{ color: "#0F172A" }} className="text-sm font-black leading-snug mt-1.5 break-words">
                           {lang === "JP"
                             ? `「${getTargetIngredientText(analysisResult)}」の代わりに【${getSubstituteItemsText(analysisResult)}】で味付けしてもらう`
                             : `Substitute [${getTargetIngredientText(analysisResult, "EN")}] with [${getSubstituteItemsText(analysisResult)}]`}
                         </h3>
-                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">
+                        <p style={{ color: "#475569" }} className="text-[11px] mt-1 leading-relaxed break-words">
                           {getSubstituteAdvice(analysisResult)}
                         </p>
-                        <p className="text-[10px] font-bold text-amber-700 mt-2 flex items-center gap-1">
+                        <p style={{ color: "#B45309" }} className="text-[10px] font-bold mt-2 flex items-center gap-1">
                           <span>{lang === "JP" ? "店員さん指差しカードを表示 ＞" : "Open Staff Pointing Card ＞"}</span>
                         </p>
                       </div>
@@ -1663,23 +1757,34 @@ export default function HalalScanApp() {
                       setStaffCardMode("remove");
                       setIsFullscreenStaffView(true);
                     }}
-                    className="rounded-3xl p-5 border-2 border-emerald-200 bg-emerald-50/40 hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
+                    style={{
+                      backgroundColor: "#ECFDF5",
+                      borderColor: "#6EE7B7",
+                      color: "#0F172A",
+                    }}
+                    className="rounded-3xl p-5 border-2 hover:border-[#24C27A] transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-2xl bg-[#24C27A] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
-                        <Utensils className="w-5 h-5" />
+                      <div
+                        style={{ backgroundColor: "#059669", color: "#FFFFFF" }}
+                        className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm mt-0.5"
+                      >
+                        <Utensils className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] font-black uppercase text-[#24C27A] bg-emerald-100 px-2 py-0.5 rounded-full tracking-wider">
+                        <span
+                          style={{ backgroundColor: "#D1FAE5", color: "#065F46" }}
+                          className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider"
+                        >
                           {t.option1Badge}
                         </span>
-                        <h3 className="text-sm font-black text-slate-900 leading-snug mt-1.5 break-words">
+                        <h3 style={{ color: "#0F172A" }} className="text-sm font-black leading-snug mt-1.5 break-words">
                           {lang === "JP"
                             ? `「${getConciseConcerningIngredientsText(analysisResult)}」を抜いてこの料理を食べる`
                             : `Eat this dish without ${getConciseConcerningIngredientsText(analysisResult, "EN")}`}
                         </h3>
-                        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed break-words">{t.option1Desc}</p>
-                        <p className="text-[10px] font-bold text-[#24C27A] mt-2 flex items-center gap-1">
+                        <p style={{ color: "#475569" }} className="text-[11px] mt-1 leading-relaxed break-words">{t.option1Desc}</p>
+                        <p style={{ color: "#047857" }} className="text-[10px] font-bold mt-2 flex items-center gap-1">
                           <span>{lang === "JP" ? "店員さん指差しカードを表示 ＞" : "Open Staff Pointing Card ＞"}</span>
                         </p>
                       </div>
