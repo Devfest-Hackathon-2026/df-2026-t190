@@ -5,10 +5,12 @@
 
 ---
 
-## 🚀 公開URL（デプロイ済み）
+## 🚀 公開URL（Google Cloud Run デプロイ済み）
 
-### 🔗 **https://tabe-can.vercel.app**
-*(スマートフォン・PCどちらのブラウザからでもカメラ撮影・画像解析をお試しいただけます)*
+### 🔗 **https://tabecan-288344990778.asia-northeast1.run.app**
+*(Google Cloud Run 上で本番稼働中！スマートフォン・PCどちらのブラウザからでもカメラ撮影・画像解析をお試しいただけます)*
+
+> ※ 予備ミラーURL: https://tabe-can.vercel.app
 
 ---
 
@@ -33,9 +35,9 @@
 ---
 
 ## 🛠️ 技術スタック
+- **実行基盤 / ホスティング**: **Google Cloud Run**（ハッカソン必須条件達成）、Cloud Build、Docker
+- **AI / 画像認識**: **Google Gemini API** (`gemini-2.5-flash` / `gemini-1.5-flash`)
 - **フロントエンド / バックエンド**: Next.js (App Router), TypeScript, Tailwind CSS, Lucide React
-- **AI / 画像認識**: Google Gemini API (`gemini-2.5-flash` / `gemini-1.5-flash`)
-- **ホスティング / デプロイ**: Vercel
 
 ---
 
