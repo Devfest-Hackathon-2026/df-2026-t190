@@ -1183,18 +1183,26 @@ export default function HalalScanApp() {
               {/* スキャンへのメインアクションカード */}
               <div
                 onClick={() => setCurrentTab("camera")}
-                className="bg-gradient-to-br from-[#24C27A] to-[#1EA866] rounded-3xl p-6 text-white shadow-md cursor-pointer hover:shadow-lg transition-all active:scale-98 flex items-center justify-between group"
+                style={{
+                  background: "linear-gradient(135deg, #24C27A 0%, #1EA866 100%)",
+                  backgroundColor: "#24C27A",
+                  color: "#FFFFFF",
+                }}
+                className="bg-brand-gradient rounded-3xl p-6 text-white shadow-md cursor-pointer hover:shadow-lg transition-all active:scale-98 flex items-center justify-between group"
               >
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-white/80">{t.scanCardSubtitle}</p>
-                  <h3 className="text-base font-black">{t.scanCardTitle}</h3>
-                  <p className="text-[11px] text-white/90 font-medium pt-1 flex items-center gap-1">
+                  <p style={{ color: "rgba(255, 255, 255, 0.85)" }} className="text-xs font-bold">{t.scanCardSubtitle}</p>
+                  <h3 style={{ color: "#FFFFFF" }} className="text-base font-black">{t.scanCardTitle}</h3>
+                  <p style={{ color: "rgba(255, 255, 255, 0.95)" }} className="text-[11px] font-medium pt-1 flex items-center gap-1">
                     <span>{t.scanCardAction}</span>
                     <ChevronRight className="w-3.5 h-3.5" />
                   </p>
                 </div>
 
-                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border-2 border-white/40 group-hover:scale-105 transition-all shrink-0">
+                <div
+                  style={{ backgroundColor: "rgba(255, 255, 255, 0.2)" }}
+                  className="w-14 h-14 rounded-full backdrop-blur-md flex items-center justify-center text-white border-2 border-white/40 group-hover:scale-105 transition-all shrink-0"
+                >
                   <Camera className="w-7 h-7" />
                 </div>
               </div>

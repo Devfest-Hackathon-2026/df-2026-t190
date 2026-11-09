@@ -7,6 +7,16 @@
 }
 
 /* 判定バッジ・ステータス用パージ防止スタイル */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #24C27A 0%, #1EA866 100%) !important;
+  background-color: #24C27A !important;
+  color: #FFFFFF !important;
+}
+.bg-brand-primary {
+  background-color: #24C27A !important;
+  color: #FFFFFF !important;
+}
+
 .status-badge-danger {
   background-color: #FFE4E6 !important;
   color: #E11D48 !important;
