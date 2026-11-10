@@ -106,3 +106,41 @@ export interface AnalysisHistoryEntity {
   staff_cards: StaffCommunicationCard[];
   created_at: string;
 }
+
+// 解析APIのレスポンス（/api/analyze が返す判定結果）
+export interface EnhancedAnalyzeResult {
+  dish_name: string;
+  dish_name_en?: string;
+  overall_status: "safe" | "warning" | "danger"; // 安全 | 注意 | 要注意
+  status_label: string; // 「安全」「注意」「要注意」
+  summary_message: string;
+  summary_message_en?: string;
+  checkpoints: {
+    name: string;
+    name_en?: string;
+    level: "safe" | "warning" | "danger";
+    level_label: "安全" | "注意" | "要注意";
+    reason: string;
+    reason_en?: string;
+  }[];
+  concerning_ingredients: string[]; // 注意・要注意となった食材リスト (例: ["豚肉", "みりん"])
+  concerning_ingredients_en?: string[]; // 英語リスト (例: ["Pork", "Mirin"])
+  proposal: {
+    remove_option_text: string;
+    remove_option_text_en?: string;
+    staff_request_phrase: string;
+    staff_request_phrase_en?: string;
+  };
+  // AIによる代替食材・調味料のカスタム提案
+  substitute_proposal?: {
+    has_substitute: boolean; // 代替調味料による提案が可能か（ラーメン等の肉エキススープ料理はfalse）
+    target_ingredient: string; // 変更してもらう調味料・食材（例: "醤油", "タレ・みりん"）※簡潔な単語
+    target_ingredient_en: string; // 英語（例: "Soy sauce", "Sauce / Mirin"）
+    substitute_items: string[]; // お店に常備されている安全な基本調味料（例: ["塩"], ["塩", "植物由来の油"]）※肉類は絶対禁止
+    substitute_items_en: string[]; // 英語（例: ["Salt"], ["Salt", "Plant-based oil"]）
+    advice: string; // AIからの提案理由・アドバイス
+    advice_en: string; // 英語アドバイス
+    staff_request_phrase: string; // 代替調味料を使った店員さん向けお願いフレーズ（簡潔に）
+    staff_request_phrase_en: string; // 英語併記
+  };
+}

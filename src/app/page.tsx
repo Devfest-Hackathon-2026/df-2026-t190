@@ -30,7 +30,7 @@ import {
   SwitchCamera,
   Sparkles,
 } from "lucide-react";
-import { EnhancedAnalyzeResult } from "./api/analyze/route";
+import { EnhancedAnalyzeResult } from "@/types";
 import { ToleranceLevel } from "@/types";
 
 type ActiveTab = "home" | "camera" | "analyzing" | "result" | "proposal" | "setting";
