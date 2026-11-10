@@ -3,6 +3,9 @@ import { UserPreferences, DEFAULT_USER_PREFERENCES, EnhancedAnalyzeResult } from
 import { buildAnalyzePrompt } from "@/lib/analyze/prompt";
 import { getMockResult } from "@/lib/analyze/mock";
 
+/** Gemini の応答を待つ上限。超えたら打ち切って 504 を返す（無期限に「分析中」のままにしない） */
+const GEMINI_TIMEOUT_MS = 30_000;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -31,6 +34,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
     try {
       const prompt = buildAnalyzePrompt(prefs, custom_prompt);
 
@@ -49,6 +54,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         // キーを URL に載せるとログやエラーメッセージに残りやすいため、ヘッダで渡す
         headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        signal: controller.signal,
         body: JSON.stringify({
           contents: [
             {
@@ -93,11 +99,17 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(result);
     } catch (aiError) {
+      if (controller.signal.aborted) {
+        console.error(`Gemini API が ${GEMINI_TIMEOUT_MS}ms 以内に応答しなかったため打ち切りました`);
+        return NextResponse.json({ error: "AI解析がタイムアウトしました" }, { status: 504 });
+      }
       console.error("=== Gemini API Call Failed ===");
       console.error(aiError);
       console.error("===============================");
       // 失敗を別料理のモックで隠さない。フロントは !res.ok で再撮影を促すアラートを出す
       return NextResponse.json({ error: "AI解析に失敗しました" }, { status: 502 });
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (error) {
     console.error("API Error:", error);
