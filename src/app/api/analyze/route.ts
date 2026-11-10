@@ -34,11 +34,12 @@ export async function POST(req: NextRequest) {
       }
 
       // 高速・高精度・混雑知らずの Google Gemini 3.5 Flash Lite（公式推奨モデル）
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent";
 
       const res = await fetch(apiUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        // キーを URL に載せるとログやエラーメッセージに残りやすいため、ヘッダで渡す
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
         body: JSON.stringify({
           contents: [
             {
