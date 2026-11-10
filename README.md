@@ -10,8 +10,6 @@
 ### 🔗 **https://tabecan-288344990778.asia-northeast1.run.app**
 *(Google Cloud Run 上で本番稼働中！スマートフォン・PCどちらのブラウザからでもカメラ撮影・画像解析をお試しいただけます)*
 
-> ※ 予備ミラーURL: https://tabe-can.vercel.app
-
 ---
 
 ## ✨ 主な機能
