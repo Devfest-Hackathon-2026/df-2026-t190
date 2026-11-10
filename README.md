@@ -41,6 +41,16 @@
 
 ---
 
+## アーキテクチャ
+
+![TabeCan のアーキテクチャ](docs/architecture.png)
+
+- 利用者のブラウザで撮った写真を端末内で長辺 800px の JPEG に縮小し、本人のハラール基準と一緒に `POST /api/analyze` へ送ります。
+- Cloud Run 上の Next.js（standalone サーバー）が、基準を組み込んだプロンプトと画像を Gemini API に渡し、返ってきた JSON の形を確かめてから画面へ返します。
+- デプロイは開発用リポジトリの main ブランチへの push から Cloud Build → Artifact Registry → Cloud Run の順に自動で行われます。この提出用リポジトリにも同じコードを置いています。
+
+---
+
 ## DevFest Hackathon 2026 提出用リポジトリについて
 
   DevFest Hackathon 2026 のチームの **最終提出用** リポジトリです。提出期限までに、作品のコードと資料をこのリポジトリに置いてください。
