@@ -56,6 +56,62 @@ function sanitizePreferences(raw: unknown): UserPreferences {
   };
 }
 
+const JUDGEMENT_LEVELS: readonly string[] = ["safe", "warning", "danger"];
+
+function isJudgementLevel(value: unknown): boolean {
+  return typeof value === "string" && JUDGEMENT_LEVELS.includes(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+/** 省略可能な配列項目。無い（undefined / null）か、文字列の配列なら可 */
+function isOptionalStringArray(value: unknown): boolean {
+  return value === undefined || value === null || isStringArray(value);
+}
+
+/**
+ * Gemini が返した JSON が画面表示に耐える形かを確かめる。
+ * 総合判定の列挙値・proposal の存在に加え、フロント（page.tsx）が
+ * 文字列や配列のメソッドを呼ぶ項目だけを見る最低限の検証。
+ */
+function isAnalyzeResult(value: unknown): value is EnhancedAnalyzeResult {
+  if (!isRecord(value)) return false;
+  if (typeof value.dish_name !== "string" || typeof value.summary_message !== "string") return false;
+  if (!isJudgementLevel(value.overall_status)) return false;
+  if (!isRecord(value.proposal)) return false;
+
+  const checkpointsValid =
+    Array.isArray(value.checkpoints) &&
+    value.checkpoints.every(
+      (cp) =>
+        isRecord(cp) && typeof cp.name === "string" && typeof cp.reason === "string" && isJudgementLevel(cp.level)
+    );
+  if (!checkpointsValid) return false;
+
+  if (!isStringArray(value.concerning_ingredients)) return false;
+  if (!isOptionalStringArray(value.concerning_ingredients_en)) return false;
+
+  const substitute = value.substitute_proposal;
+  if (substitute === undefined || substitute === null) return true;
+  return (
+    isRecord(substitute) &&
+    isStringArray(substitute.substitute_items) &&
+    isOptionalStringArray(substitute.substitute_items_en)
+  );
+}
+
+/** generateContent の応答から、思考過程（thought）を除いた本文テキストを取り出す */
+function extractResponseText(data: unknown): string {
+  if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
+  const candidate: unknown = data.candidates[0];
+  const content = isRecord(candidate) ? candidate.content : undefined;
+  const parts = isRecord(content) && Array.isArray(content.parts) ? content.parts.filter(isRecord) : [];
+  const validPart = parts.find((p) => p.text && !p.thought) || parts[parts.length - 1];
+  return typeof validPart?.text === "string" ? validPart.text : "";
+}
+
 export async function POST(req: NextRequest) {
   // 本文を読む前に Content-Length で巨大なリクエストを弾く
   if (Number(req.headers.get("content-length")) > MAX_REQUEST_BODY_BYTES) {
@@ -150,15 +206,15 @@ export async function POST(req: NextRequest) {
         throw new Error(`Gemini API error ${res.status}: ${errBody}`);
       }
 
-      const responseData = await res.json();
-      const parts = responseData.candidates?.[0]?.content?.parts || [];
-      const validPart =
-        parts.find((p: { text?: string; thought?: boolean }) => p.text && !p.thought) ||
-        parts[parts.length - 1];
-
-      const rawText = validPart?.text || "";
+      const responseData: unknown = await res.json();
+      const rawText = extractResponseText(responseData);
       const cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      const result: EnhancedAnalyzeResult = JSON.parse(cleaned);
+      // JSON として壊れていれば JSON.parse が投げ、下の catch で 502 になる
+      const result: unknown = JSON.parse(cleaned);
+      if (!isAnalyzeResult(result)) {
+        console.error("Gemini の応答が想定した JSON の形ではありません:", cleaned);
+        return NextResponse.json({ error: "AI解析の結果を読み取れませんでした" }, { status: 502 });
+      }
 
       console.log("=== AI Analysis Succeeded ===");
       console.log("Recognized Dish:", result.dish_name);
