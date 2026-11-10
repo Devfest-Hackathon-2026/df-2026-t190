@@ -91,6 +91,7 @@ lint とビルドの確認は `npm run lint` と `npm run build` で行えます
 │   └── db/schema.sql             # DB スキーマ案（現在は未使用）
 ├── public/                       # 静的ファイル置き場（Dockerfile がコピーするため空でも残す）
 ├── docs/architecture.png         # アーキテクチャ図
+├── docs/schema-v2.md             # 判定スキーマ v2 の設計（決勝に向けて）
 ├── design.md                     # 画面・デザインの仕様
 ├── Dockerfile                    # Cloud Run 用のコンテナ（Next.js standalone）
 └── .gemini/skills/hallmark/      # 第三者のデザインスキル Hallmark の同梱物（lint の対象外）
