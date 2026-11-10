@@ -18,7 +18,6 @@ import {
   Utensils,
   Image as ImageIcon,
   Maximize2,
-  Minimize2,
   ChevronRight,
   Wine,
   FlaskConical,
@@ -465,24 +464,6 @@ export default function HalalScanApp() {
     reader.readAsDataURL(file);
   };
 
-  // サンプルデモ画像の実行
-  const handleSampleRun = (sampleType: "nikujaga" | "ramen" | "salad") => {
-    stopCamera();
-
-    let demoImageUrl =
-      "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
-    if (sampleType === "ramen") {
-      demoImageUrl =
-        "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=800&q=80";
-    } else if (sampleType === "salad") {
-      demoImageUrl =
-        "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80";
-    }
-
-    setCapturedImage(demoImageUrl);
-    runAnalysis(demoImageUrl, sampleType);
-  };
-
   // AI解析リクエスト処理
   const runAnalysis = async (
     imageData: string,
@@ -795,10 +776,6 @@ export default function HalalScanApp() {
       return ing;
     });
     return enMapped.join(", ") || "these ingredients";
-  };
-
-  const getConcerningIngredientsText = (item?: EnhancedAnalyzeResult | null) => {
-    return getConciseConcerningIngredientsText(item);
   };
 
   const getSubstituteItemsText = (item?: EnhancedAnalyzeResult | null, targetLang?: "JP" | "EN") => {
