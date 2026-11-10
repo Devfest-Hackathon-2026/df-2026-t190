@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Halal Check",
-  description: "Your personalized Halal food scanner and assistant",
+  title: "TabeCan",
+  description: "TabeCan estimates from a photo whether a dish may contain ingredients you choose to avoid.",
 };
 
 export default function RootLayout({
