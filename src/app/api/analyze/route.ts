@@ -14,22 +14,8 @@ export async function POST(req: NextRequest) {
 
     const prefs = user_preferences || DEFAULT_USER_PREFERENCES;
 
-    // 環境変数または .env.local から確実に API キーを取得
-    let apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      try {
-        const fs = await import("fs");
-        const path = await import("path");
-        const envPath = path.resolve(process.cwd(), ".env.local");
-        if (fs.existsSync(envPath)) {
-          const content = fs.readFileSync(envPath, "utf-8");
-          const match = content.match(/GEMINI_API_KEY=(.+)/);
-          if (match) apiKey = match[1].trim();
-        }
-      } catch (e) {
-        console.warn("Could not read .env.local:", e);
-      }
-    }
+    // .env.local は Next.js が自動で読み込むため、ここでは process.env だけを見る
+    const apiKey = process.env.GEMINI_API_KEY;
 
     // 画像がない、デモ実行、またはAPIキーがない場合はモックを返す
     if (!image_data || image_data === "demo" || !apiKey) {
