@@ -149,8 +149,7 @@ const translations = {
     radioAllow: "気にしない",
     customNotesTitle: "その他の自由記述（任意）",
     customNotesBadge: "任意",
-    customNotesDesc: "アレルギーや特に避けたい調味料・食材などがあれば自由にご記入ください",
-    customNotesPlaceholder: "例: 甲殻類アレルギーがあります。乳化剤やショートニングもできれば避けたいです。",
+    allergyNotice: "アレルギーには対応していません",
     saveSettings: "設定を保存",
   },
   EN: {
@@ -264,8 +263,7 @@ const translations = {
     radioAllow: "Allow",
     customNotesTitle: "Additional Notes (Optional)",
     customNotesBadge: "Optional",
-    customNotesDesc: "Enter any allergies or specific dietary preferences/restrictions",
-    customNotesPlaceholder: "e.g. Shellfish allergy. Prefer to avoid emulsifiers and shortening if possible.",
+    allergyNotice: "Allergies are not supported",
     saveSettings: "Save Settings",
   },
 };
@@ -1973,8 +1971,8 @@ export default function HalalScanApp() {
                           {t.customNotesBadge}
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5">
-                        {t.customNotesDesc}
+                      <p className="text-[10px] font-bold text-rose-500 mt-0.5">
+                        ※{t.allergyNotice}
                       </p>
                     </div>
                   </div>
@@ -1982,9 +1980,8 @@ export default function HalalScanApp() {
                   <textarea
                     value={customNotes}
                     onChange={(e) => setCustomNotes(e.target.value)}
-                    placeholder={t.customNotesPlaceholder}
                     rows={3}
-                    className="w-full text-xs p-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#24C27A]/40 focus:border-[#24C27A] text-slate-800 placeholder:text-slate-400 resize-none transition-all"
+                    className="w-full text-xs p-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#24C27A]/40 focus:border-[#24C27A] text-slate-800 resize-none transition-all"
                   />
                 </div>
               </div>
