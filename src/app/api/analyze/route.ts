@@ -3,6 +3,11 @@ import { UserPreferences, DEFAULT_USER_PREFERENCES, EnhancedAnalyzeResult, Toler
 import { buildAnalyzePrompt } from "@/lib/analyze/prompt";
 import { getMockResult } from "@/lib/analyze/mock";
 
+const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+
+/** 環境変数 GEMINI_MODEL が未設定のときに使うモデル */
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
+
 /** Gemini の応答を待つ上限。超えたら打ち切って 504 を返す（無期限に「分析中」のままにしない） */
 const GEMINI_TIMEOUT_MS = 30_000;
 
@@ -171,8 +176,9 @@ export async function POST(req: NextRequest) {
     try {
       const prompt = buildAnalyzePrompt(prefs, custom_prompt);
 
-      // 高速・高精度・混雑知らずの Google Gemini 3.5 Flash Lite（公式推奨モデル）
-      const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent";
+      // 既定は Gemini 3.5 Flash Lite。コードを変えずに切り替えられるよう GEMINI_MODEL で上書きできる
+      const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
+      const apiUrl = `${GEMINI_API_BASE_URL}/${model}:generateContent`;
 
       const res = await fetch(apiUrl, {
         method: "POST",
