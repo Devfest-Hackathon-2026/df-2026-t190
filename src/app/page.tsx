@@ -75,7 +75,7 @@ const translations = {
     cameraErrorPermission:
       "カメラへのアクセスが拒否されました。設定でカメラを許可するか、下のアルバムから選択をお試しください。",
     cameraFallbackGuide:
-      "カメラを起動できませんでした。下の「アルバムから選択」または「サンプル料理」をお試しください。",
+      "カメラが使えない場合は、アルバムのボタンから料理の写真を選んでください。",
     restartCamera: "カメラを再起動",
     flashOn: "Flash on",
     flashOff: "Flash off",
@@ -87,7 +87,7 @@ const translations = {
     // 解析中画面
     analyzingTitle: "AIが料理を分析中...",
     analyzingDesc:
-      "豚肉・アルコール・調味料などを照合し、あなたの信仰基準に合致するか判定しています。",
+      "豚肉・アルコール・調味料などを照合し、あなたが設定した基準に関わりそうな材料を推定しています。",
 
     // 解析結果画面
     resultHeader: "AI解析結果",
@@ -96,7 +96,8 @@ const translations = {
     statusSafe: "安全",
     statusDangerSummary: "基準に合わない食材が含まれている可能性があります",
     statusWarningSummary: "調味料や製法などの確認が推奨されます",
-    statusSafeSummary: "設定基準に照らし合わせて安全と判断されました",
+    statusSafeSummary: "設定した基準に関わる材料は、写真からは見つかりませんでした",
+    estimateNote: "写真からの推定です。最終的な判断はご自身で、確認はお店で。",
     checkpointsHeader: "成分チェックポイント",
     nextToProposal: "次へ: 食事の提案・選択肢を見る",
 
@@ -107,7 +108,7 @@ const translations = {
     proposalSafeTitle: "このメニューは安心してお召し上がりいただけます！",
     proposalWarningDesc: "以下の選択肢から選ぶことができます。",
     proposalSafeDesc: "楽しい日本での食事をお楽しみください。",
-    substituteOptionBadge: "✨ AIからの提案",
+    substituteOptionBadge: "AIからの提案",
     substituteActionPrefix: "代わりに【",
     substituteActionSuffix: "】で味付け・調理してもらう",
     substituteDescFallback: "お店で準備してもらいやすい安全な食材・調味料に変更して美味しく楽しめます。",
@@ -125,7 +126,7 @@ const translations = {
     fullScreen: "大画面で表示",
     yesButton: "はい",
     noButton: "ごめんなさい。対応できません",
-    reactionYes: "🎉 ありがとうございます！安心してご注文いただけます。",
+    reactionYes: "ありがとうございます。煮汁やだしに残る料理もあるので、気になるときは続けて確認してください。",
     reactionNo: "承知いたしました。他の食べ物を見るため、カメラ画面に戻ります...",
     scanOtherDish: "他の食べ物を見る（カメラに戻る）",
     staffFullscreenBadge: "店員さんにお見せください",
@@ -133,7 +134,7 @@ const translations = {
 
     // 設定画面
     settingsHeader: "ハラール基準の設定",
-    settingsSub: "あなたの信仰や考え方に合わせて許容リスクを設定します",
+    settingsSub: "どこまで避けるかは、人や従う見解によって違います。ご自身の判断に合わせて選んでください。",
     item1Title: "アルコール成分が含まれるもの",
     item1Desc: "酒粕、洋酒入りスイーツ、アルコール飲料など",
     item2Title: "製造工程で、アルコールが生成される可能性のあるもの（醤油など）",
@@ -189,7 +190,7 @@ const translations = {
     cameraErrorPermission:
       "Camera access was denied. Please allow camera in settings or choose a photo from album.",
     cameraFallbackGuide:
-      "Could not launch camera. Please try selecting a photo from album or sample dishes below.",
+      "If the camera isn't available, use the album button to choose a photo of the dish.",
     restartCamera: "Restart Camera",
     flashOn: "Flash on",
     flashOff: "Flash off",
@@ -201,7 +202,7 @@ const translations = {
     // 解析中画面
     analyzingTitle: "AI is analyzing your dish...",
     analyzingDesc:
-      "Checking pork, alcohol, and seasoning against your personal dietary criteria.",
+      "Checking pork, alcohol, seasonings and more to estimate which ingredients may relate to the criteria you set.",
 
     // 解析結果画面
     resultHeader: "AI Analysis Result",
@@ -210,7 +211,8 @@ const translations = {
     statusSafe: "Safe",
     statusDangerSummary: "May contain ingredients not suitable for your criteria",
     statusWarningSummary: "Verification of seasonings or preparation is recommended",
-    statusSafeSummary: "Judged safe based on your selected criteria",
+    statusSafeSummary: "Nothing matching your settings was found in the photo",
+    estimateNote: "This is an estimate from a photo. The final decision is yours; check with the restaurant.",
     checkpointsHeader: "Ingredient Checkpoints",
     nextToProposal: "Next: View meal suggestions & options",
 
@@ -221,7 +223,7 @@ const translations = {
     proposalSafeTitle: "You can enjoy this dish with confidence!",
     proposalWarningDesc: "You can choose from the options below.",
     proposalSafeDesc: "Have a wonderful dining experience in Japan.",
-    substituteOptionBadge: "✨ AI Suggestion",
+    substituteOptionBadge: "AI Suggestion",
     substituteActionPrefix: "Substitute with [",
     substituteActionSuffix: "] instead",
     substituteDescFallback: "Enjoy safely by asking the restaurant to use available halal seasonings.",
@@ -238,8 +240,8 @@ const translations = {
     staffCardTitle: "Staff Pointing Card",
     fullScreen: "Full Screen",
     yesButton: "はい (Yes)",
-    noButton: "できません (Sorry, we can't🥺)",
-    reactionYes: "🎉 Thank you! You can order with confidence.",
+    noButton: "できません (Sorry, we can't)",
+    reactionYes: "The staff said yes. Some ingredients can remain in broth or sauce, so ask again if it matters to you.",
     reactionNo: "Understood. Returning to camera to find other dishes...",
     scanOtherDish: "Find other dishes (Return to Camera)",
     staffFullscreenBadge: "Please show this to staff",
@@ -247,7 +249,7 @@ const translations = {
 
     // 設定画面
     settingsHeader: "Halal Criteria Settings",
-    settingsSub: "Customize acceptable risk levels according to your faith and preference",
+    settingsSub: "Rulings and practice differ. Choose what you follow.",
     item1Title: "Products containing alcohol",
     item1Desc: "Sake lees, Western liquor sweets, alcoholic beverages, etc.",
     item2Title: "Naturally produced alcohol (Soy sauce, etc.)",
@@ -989,7 +991,7 @@ export default function HalalScanApp() {
                       : "text-white/80 hover:text-white"
                   }`}
                 >
-                  ✨ {lang === "JP" ? "代替調味料でお願い" : "With Substitute"}
+                  {lang === "JP" ? "代替調味料でお願い" : "With Substitute"}
                 </button>
                 <button
                   type="button"
@@ -1028,7 +1030,7 @@ export default function HalalScanApp() {
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4 font-black text-amber-200">
                       {getSubstituteItemsText(analysisResult, "JP")}
                     </span>
-                    」で味付け・調理して頂くことは可能でしょうか？
+                    」で味付け・調理していただくことは可能でしょうか？
                   </p>
 
                   {/* 下部に小さく英語で文章を表示 */}
@@ -1053,7 +1055,7 @@ export default function HalalScanApp() {
                     <span className="underline decoration-amber-300 decoration-4 underline-offset-4">
                       {getConciseConcerningIngredientsText(analysisResult, "JP")}
                     </span>
-                    」を使わずに調理して頂くことは可能でしょうか？
+                    」を使わずに調理していただくことは可能でしょうか？
                   </p>
 
                   {/* 下部に小さく英語で文章を表示 */}
@@ -1542,6 +1544,7 @@ export default function HalalScanApp() {
                     </div>
                   </div>
                 )}
+                <p className="text-[11px] text-slate-500 font-medium mt-2">{t.estimateNote}</p>
               </div>
 
               {/* チェックポイント（理由付き詳細） */}
@@ -1724,8 +1727,8 @@ export default function HalalScanApp() {
                       className="p-4 rounded-3xl border text-xs font-bold leading-relaxed"
                     >
                       {lang === "JP"
-                        ? "このメニューはハラール基準を満たしています。安心してお召し上がりください！"
-                        : "This dish meets your halal criteria. Enjoy your meal with confidence!"}
+                        ? "写真から推定した範囲では、避けたい材料は見つかりませんでした。だし・下味・揚げ油の共用などは写真では分からないため、気になるときは店員さんに確認してください。"
+                        : "From the photo, we found nothing you chose to avoid. Broth, marinades and shared fryers can't be seen, so please check with staff if it matters to you."}
                     </div>
                     <button
                       type="button"
@@ -1895,7 +1898,7 @@ export default function HalalScanApp() {
 
                   <div className="space-y-1 text-center py-1">
                     <p className="text-base font-black text-slate-900 leading-snug">
-                      「{getConciseConcerningIngredientsText(analysisResult, "JP")}を使わずに調理して頂くことは可能でしょうか？」
+                      「{getConciseConcerningIngredientsText(analysisResult, "JP")}を使わずに調理していただくことは可能でしょうか？」
                     </p>
                     {lang === "EN" && (
                       <p className="text-[11px] text-slate-500">
