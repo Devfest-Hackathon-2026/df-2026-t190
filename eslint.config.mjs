@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 第三者のデザインスキル Hallmark の同梱物。アプリのコードではないため lint しない
+    ".gemini/**",
   ]),
 ]);
 
