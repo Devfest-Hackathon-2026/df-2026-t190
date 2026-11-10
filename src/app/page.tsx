@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useSyncExternalStore } from "react";
 import {
   Camera,
   ArrowLeft,
@@ -268,6 +268,77 @@ const translations = {
   },
 };
 
+// =========================================================================
+// ユーザー設定の端末保存（localStorage）
+// =========================================================================
+const SETTINGS_STORAGE_KEY = "TABECAN_SETTINGS_V1";
+const TOLERANCE_LEVELS: readonly ToleranceLevel[] = ["strict", "conditional", "allow"];
+const TOLERANCE_SETTING_KEYS = [
+  "alcoholDirect",
+  "alcoholFermented",
+  "alcoholCooked",
+  "porkPolicy",
+  "nonHalalMeatPolicy",
+] as const;
+
+type StoredSettings = {
+  lang: "JP" | "EN";
+  alcoholDirect: ToleranceLevel;
+  alcoholFermented: ToleranceLevel;
+  alcoholCooked: ToleranceLevel;
+  porkPolicy: ToleranceLevel;
+  nonHalalMeatPolicy: ToleranceLevel;
+  customNotes: string;
+};
+
+// 保存済みの設定を読む。壊れたデータ・不正な値は捨てて警告を1回出し、残りは既定値のまま動かす
+function loadStoredSettings(): Partial<StoredSettings> {
+  let parsed: unknown;
+  try {
+    const json = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (json === null) return {};
+    parsed = JSON.parse(json);
+  } catch (err) {
+    console.warn("Could not read saved settings; using defaults:", err);
+    return {};
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    console.warn("Saved settings have an unexpected format; using defaults.");
+    return {};
+  }
+
+  const raw = parsed as Record<string, unknown>;
+  const settings: Partial<StoredSettings> = {};
+  const rejectedKeys: string[] = [];
+  for (const key of TOLERANCE_SETTING_KEYS) {
+    const value = raw[key];
+    if (value === undefined) continue;
+    if (TOLERANCE_LEVELS.includes(value as ToleranceLevel)) settings[key] = value as ToleranceLevel;
+    else rejectedKeys.push(key);
+  }
+  if (raw.lang === "JP" || raw.lang === "EN") settings.lang = raw.lang;
+  else if (raw.lang !== undefined) rejectedKeys.push("lang");
+  if (typeof raw.customNotes === "string") settings.customNotes = raw.customNotes;
+  else if (raw.customNotes !== undefined) rejectedKeys.push("customNotes");
+
+  if (rejectedKeys.length > 0) {
+    console.warn(`Ignored invalid saved settings; using defaults for: ${rejectedKeys.join(", ")}`);
+  }
+  return settings;
+}
+
+// 設定を端末に書き込む。書けない環境（プライベートモード等）では警告だけ出して操作は続ける
+function saveStoredSettings(settings: Partial<StoredSettings>): void {
+  try {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.warn("Could not save settings on this device:", err);
+  }
+}
+
+// useSyncExternalStore 用。購読するものは無い（クライアントで描画中かどうかだけを知りたい）
+const subscribeToNothing = () => () => {};
+
 export default function HalalScanApp() {
   const [currentTab, setCurrentTab] = useState<ActiveTab>("home");
   const [lang, setLang] = useState<"JP" | "EN">("JP");
@@ -277,7 +348,10 @@ export default function HalalScanApp() {
 
   // 言語切り替えトグル関数
   const toggleLanguage = () => {
-    setLang((prev) => (prev === "JP" ? "EN" : "JP"));
+    const nextLang = lang === "JP" ? "EN" : "JP";
+    setLang(nextLang);
+    // 言語だけを上書きし、保存済みの基準設定は残す
+    saveStoredSettings({ ...loadStoredSettings(), lang: nextLang });
   };
 
   // =========================================================================
@@ -290,6 +364,23 @@ export default function HalalScanApp() {
   const [nonHalalMeatPolicy, setNonHalalMeatPolicy] = useState<ToleranceLevel>("conditional");
   // 6. 任意の自由記述欄
   const [customNotes, setCustomNotes] = useState("");
+
+  // 端末に保存した設定を、クライアントでの初回描画時に一度だけ反映する。
+  // サーバー描画とハイドレーション中は isClient が false なので既定値のまま描画され、HTML の不一致は起きない。
+  // 反映は描画中の条件付き更新で行う（https://react.dev/reference/react/useState#storing-information-from-previous-renders）
+  const isClient = useSyncExternalStore(subscribeToNothing, () => true, () => false);
+  const [hasRestoredSettings, setHasRestoredSettings] = useState(false);
+  if (isClient && !hasRestoredSettings) {
+    setHasRestoredSettings(true);
+    const stored = loadStoredSettings();
+    if (stored.lang) setLang(stored.lang);
+    if (stored.alcoholDirect) setAlcoholDirect(stored.alcoholDirect);
+    if (stored.alcoholFermented) setAlcoholFermented(stored.alcoholFermented);
+    if (stored.alcoholCooked) setAlcoholCooked(stored.alcoholCooked);
+    if (stored.porkPolicy) setPorkPolicy(stored.porkPolicy);
+    if (stored.nonHalalMeatPolicy) setNonHalalMeatPolicy(stored.nonHalalMeatPolicy);
+    if (stored.customNotes !== undefined) setCustomNotes(stored.customNotes);
+  }
 
   // 保存完了トースト表示
   const [showSavedToast, setShowSavedToast] = useState(false);
@@ -513,6 +604,15 @@ export default function HalalScanApp() {
 
   // 設定保存ハンドラー
   const handleSaveSettings = () => {
+    saveStoredSettings({
+      lang,
+      alcoholDirect,
+      alcoholFermented,
+      alcoholCooked,
+      porkPolicy,
+      nonHalalMeatPolicy,
+      customNotes,
+    });
     setShowSavedToast(true);
     setTimeout(() => {
       setShowSavedToast(false);
