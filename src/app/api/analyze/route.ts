@@ -14,11 +14,20 @@ export async function POST(req: NextRequest) {
 
     const prefs = user_preferences || DEFAULT_USER_PREFERENCES;
 
+    // 画像がない、または明示的なデモ実行の場合はモックを返す
+    if (!image_data || image_data === "demo") {
+      return NextResponse.json(getMockResult(prefs, custom_prompt));
+    }
+
     // .env.local は Next.js が自動で読み込むため、ここでは process.env だけを見る
     const apiKey = process.env.GEMINI_API_KEY;
-
-    // 画像がない、デモ実行、またはAPIキーがない場合はモックを返す
-    if (!image_data || image_data === "demo" || !apiKey) {
+    if (!apiKey) {
+      // 本番で別料理のモックを本物の判定のように見せないよう、明示的なエラーにする
+      if (process.env.NODE_ENV === "production") {
+        console.error("GEMINI_API_KEY が設定されていないため AI 解析を実行できません");
+        return NextResponse.json({ error: "AI解析の設定が完了していません" }, { status: 503 });
+      }
+      console.warn("GEMINI_API_KEY が未設定のため、開発用のモックを返します");
       return NextResponse.json(getMockResult(prefs, custom_prompt));
     }
 
@@ -87,7 +96,8 @@ export async function POST(req: NextRequest) {
       console.error("=== Gemini API Call Failed ===");
       console.error(aiError);
       console.error("===============================");
-      return NextResponse.json(getMockResult(prefs, custom_prompt));
+      // 失敗を別料理のモックで隠さない。フロントは !res.ok で再撮影を促すアラートを出す
+      return NextResponse.json({ error: "AI解析に失敗しました" }, { status: 502 });
     }
   } catch (error) {
     console.error("API Error:", error);
