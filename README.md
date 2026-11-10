@@ -36,7 +36,7 @@
 
 ## 🛠️ 技術スタック
 - **実行基盤 / ホスティング**: **Google Cloud Run**（ハッカソン必須条件達成）、Cloud Build、Docker
-- **AI / 画像認識**: **Google Gemini API** (`gemini-2.5-flash` / `gemini-1.5-flash`)
+- **AI / 画像認識**: **Google Gemini API** (`gemini-3.5-flash-lite`、環境変数 `GEMINI_MODEL` で変更可)
 - **フロントエンド / バックエンド**: Next.js (App Router), TypeScript, Tailwind CSS, Lucide React
 
 ---
