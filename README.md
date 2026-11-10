@@ -51,6 +51,53 @@
 
 ---
 
+## ローカルでの動かし方
+
+Node.js 20.9 以上が必要です（Docker イメージは Node.js 20 を使っています）。
+
+```bash
+npm ci
+cp .env.example .env.local   # GEMINI_API_KEY を自分のキーに書き換える
+npm run dev
+```
+
+ブラウザで http://localhost:3000 を開きます。
+
+| 環境変数 | 必須 | 内容 |
+| --- | --- | --- |
+| `GEMINI_API_KEY` | 必須 | [Google AI Studio](https://aistudio.google.com/) で発行した Gemini API キー。`.env.local` に書き、コミットしない |
+| `GEMINI_MODEL` | 任意 | 使う Gemini のモデル名。未設定なら `gemini-3.5-flash-lite` |
+
+`GEMINI_API_KEY` が未設定のとき、`npm run dev` では固定のモック結果を返し、本番ビルドでは解析 API が 503 を返します。
+
+lint とビルドの確認は `npm run lint` と `npm run build` で行えます。
+
+---
+
+## ディレクトリ構成
+
+```text
+.
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # 画面すべて（ホーム・カメラ・解析中・結果・指差しカード・設定）
+│   │   ├── layout.tsx            # HTML の骨組み。Tailwind CSS（CDN）と Google Fonts の読み込み
+│   │   ├── globals.css           # 共通スタイルと判定バッジの色
+│   │   └── api/analyze/route.ts  # 解析 API。入力の検証 → Gemini 呼び出し → 応答 JSON の検証
+│   ├── lib/analyze/
+│   │   ├── prompt.ts             # Gemini に渡す判定プロンプト
+│   │   └── mock.ts               # デモ・開発用のモック判定結果
+│   ├── types/index.ts            # 共通の型（ユーザー設定・解析結果）
+│   └── db/schema.sql             # DB スキーマ案（現在は未使用）
+├── public/                       # 静的ファイル置き場（Dockerfile がコピーするため空でも残す）
+├── docs/architecture.png         # アーキテクチャ図
+├── design.md                     # 画面・デザインの仕様
+├── Dockerfile                    # Cloud Run 用のコンテナ（Next.js standalone）
+└── .gemini/skills/hallmark/      # 第三者のデザインスキル Hallmark の同梱物（lint の対象外）
+```
+
+---
+
 ## DevFest Hackathon 2026 提出用リポジトリについて
 
   DevFest Hackathon 2026 のチームの **最終提出用** リポジトリです。提出期限までに、作品のコードと資料をこのリポジトリに置いてください。
